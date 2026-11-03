@@ -1,15 +1,15 @@
-import {calculate,dollars,formatMoney as money} from './budget.js';
+import {HOURS_PER_WEEK,calculate,dollars,formatMoney as money} from './budget.js';
+document.querySelectorAll('[data-hours]').forEach(el=>el.textContent=HOURS_PER_WEEK);
 const fields=['name','date','fourWeeks','needsReason','goal','saving','needWant','savedFour','fits','biggest','surprise','percent'];
 const titles=['Earn it','Plan your needs','Save & spend','Check your plan'];
 let state={},current=0,blankPrint=false;
 try{const data=JSON.parse(localStorage.getItem('money-mission-v1')||'{}');if(data&&typeof data==='object'&&!Array.isArray(data))state=data;}catch{}
+// Bring forward choices saved by the previous, smaller-number version of the workbook.
+for(const [key,map] of Object.entries({home:{'20':'300','30':'400','40':'500'},travel:{'5':'50','15':'150'},want:{'5':'25','10':'50'}})){if(Object.hasOwn(map,String(state[key])))state[key]=map[String(state[key])];}
 function render(){
  const b=calculate(state);
  document.querySelectorAll('main [data-group]').forEach(btn=>{const chosen=String(state[btn.dataset.group])===btn.dataset.value;btn.classList.toggle('selected',chosen);btn.setAttribute('aria-pressed',String(chosen));});
  document.querySelectorAll('main [data-output]').forEach(el=>el.textContent=money(b[el.dataset.output]));
- const counting=document.querySelector('#counting-strip');counting.replaceChildren();
- if(b.rate===null)counting.textContent='Choose a job to see your five hours of pay.';
- else for(let i=0;i<5;i++){if(i){const plus=document.createElement('span');plus.className='plus';plus.textContent='+';plus.setAttribute('aria-hidden','true');counting.append(plus);}const token=document.createElement('span');token.className='pay-token';token.textContent=money(b.rate);counting.append(token);}
  const needsHint=document.querySelector('#needs-hint');needsHint.textContent=b.income===null?'Start on page 1 to find out how much you earn.':'You earned '+money(b.income)+' this week. Now choose your needs.';
  const savingHint=document.querySelector('#saving-hint');savingHint.classList.toggle('over',b.remaining!==null&&b.remaining<0);
  savingHint.textContent=b.afterNeeds===null?'Finish pages 1 and 2 to see what you can save and spend.':b.remaining!==null&&b.remaining<0?'Your plan is '+money(-b.remaining)+' over your income. Try saving less or choosing a lower cost.':'After your needs, you have '+money(b.afterNeeds)+' for savings, fun, and leftover money.';
@@ -22,7 +22,7 @@ function render(){
  document.querySelector('#page-prompt').textContent=prompts[current];
 }
 function syncInputs(){fields.forEach(key=>document.querySelector('main [data-field="'+key+'"]').value=state[key]??'');validateSaving();}
-function validateSaving(){const input=document.querySelector('main [data-field="saving"]');input.setCustomValidity('');const invalid=input.validity.badInput||(input.value!==''&&dollars(input.value)===null);const message=invalid?'Use a whole dollar amount from 0 to 999.':'';input.setCustomValidity(message);input.setAttribute('aria-invalid',String(invalid));document.querySelector('#saving-error').textContent=message;return !invalid;}
+function validateSaving(){const input=document.querySelector('main [data-field="saving"]');input.setCustomValidity('');const invalid=input.validity.badInput||(input.value!==''&&dollars(input.value)===null);const message=invalid?'Use a whole dollar amount from 0 to 1,200.':'';input.setCustomValidity(message);input.setAttribute('aria-invalid',String(invalid));document.querySelector('#saving-error').textContent=message;return !invalid;}
 function save(){try{localStorage.setItem('money-mission-v1',JSON.stringify(state));document.querySelector('#save-state').textContent='Saved on this device';}catch{document.querySelector('#save-state').textContent='Not saved · print to keep your work';}}
 function navigate(page,focus=false){current=Math.max(0,Math.min(3,page));document.querySelectorAll('main [data-sheet]').forEach(s=>s.classList.toggle('active',Number(s.dataset.sheet)===current));document.querySelectorAll('[data-page]').forEach(btn=>{const active=Number(btn.dataset.page)===current;btn.classList.toggle('active',active);if(active)btn.setAttribute('aria-current','step');else btn.removeAttribute('aria-current');});document.querySelector('#prev').disabled=current===0;const next=document.querySelector('#next');next.hidden=current===3;next.textContent=['Next: Needs →','Next: Save & spend →','Next: Check my plan →'][current]||'';document.querySelector('#page-count').textContent='Mission '+(current+1)+' of 4';render();if(focus){const heading=document.querySelector('main .sheet.active h2');heading.setAttribute('tabindex','-1');heading.focus({preventScroll:true});document.querySelector('.steps').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}}
 document.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>navigate(Number(btn.dataset.page))));
@@ -36,7 +36,6 @@ function preparePrint(){
  document.querySelectorAll('main .sheet').forEach(original=>{
   const sheet=original.cloneNode(true);sheet.classList.remove('active');sheet.removeAttribute('aria-labelledby');sheet.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
   sheet.querySelectorAll('.pocket-hint').forEach(el=>el.remove());
-  const counting=sheet.querySelector('.counting-strip');if(counting){counting.replaceChildren();for(let i=0;i<5;i++){if(i){const plus=document.createElement('span');plus.className='plus';plus.textContent='+';counting.append(plus);}const token=document.createElement('span');token.className='pay-token';token.textContent=b.rate===null?'$____':money(b.rate);counting.append(token);}}
   sheet.querySelectorAll('[data-group]').forEach(btn=>{btn.classList.toggle('selected',!blankPrint&&String(printState[btn.dataset.group])===btn.dataset.value);btn.removeAttribute('aria-pressed');});
   sheet.querySelectorAll('[data-output]').forEach(el=>{const value=b[el.dataset.output];el.textContent=value===null?'':money(value);el.classList.toggle('empty-output',value===null);});
   sheet.querySelectorAll('input,textarea').forEach(input=>{

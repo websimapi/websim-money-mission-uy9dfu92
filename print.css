@@ -21,8 +21,7 @@
  .choice-art,.jobs .choice-art,.tile .choice-art{height:13mm;width:22mm;margin-bottom:2mm}
  .choice strong{font-size:10.5pt;min-height:0;line-height:1.2}.choice small{font-size:8.5pt;min-height:0;line-height:1.3;margin-top:1mm}.choice b{font-size:17pt;margin-top:2mm}.choice b small{display:inline;font-size:8pt;min-height:0}
  .choice i{width:4mm;height:4mm;border:1px solid #789181;top:2mm;right:2mm}.choice.selected{border:2px solid #27745a;background:#edf5ed}.choice.selected i:after{font-size:8pt}
- .counting-strip{padding:0 0 2mm;gap:2mm}.pay-token{font-size:10pt;height:6mm;min-width:19mm;border:1px solid #c2b688;border-radius:2mm}.counting-strip .plus{font-size:10pt}
- .math-strip{padding:4mm 3mm;border-radius:3mm}.math-strip div span{font-size:9pt;max-width:none}.math-strip strong{font-size:21pt}.math-symbol{font-size:20pt}.math-strip>div{min-width:28mm}
+ .income-calculation{padding:3mm 4mm;border:1px dashed #81988b;border-radius:2mm;break-inside:avoid}.work-rule{font-size:10pt;margin-bottom:3mm}.income-row{flex-direction:row;align-items:center;font-size:10pt}.income-equation{width:auto;gap:3mm;font-size:10pt}.income-equation strong{font-size:15pt;min-width:23mm;padding-bottom:1mm}.income-total{margin-top:3mm;padding:3mm 4mm;border-width:1px;border-radius:2mm;break-inside:avoid}.income-total div>strong{font-size:12pt}.income-total small{font-size:9pt;margin-top:1mm}.income-total>strong{font-size:21pt}
  .empty-output{display:inline-block;min-width:22mm;min-height:4.5mm;border-bottom:1px solid #7b8f7e;color:transparent}
  .note{margin:4mm 0 1mm;padding-left:3mm;border-left:1mm solid #cfa64a}.note strong{font-size:9pt}.note p{font-size:9pt;line-height:1.45;margin-top:1mm}
  .stretch{padding:2.5mm 4mm;margin-top:3mm;border:1px dashed #a89876;border-radius:2mm;break-inside:avoid}.stretch>span{font-size:8pt;margin-bottom:1.5mm}.stretch label{font-size:10pt}.stretch small{font-size:9pt;margin-top:1mm}

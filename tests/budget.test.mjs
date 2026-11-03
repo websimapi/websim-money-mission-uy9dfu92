@@ -27,3 +27,10 @@ const over=calculate({job:'animal',home:'house',travel:'car',want:'movie',saving
 const cheap=calculate({job:'animal',home:'apartment',travel:'bus',want:'park',saving:0});assert.ok(cheap.remaining>0);assert.equal(cheap.want,0);
 assert.equal(calculate({job:'animal',home:'apartment',travel:'bus',want:'park'}).remaining,null);
 console.log('PASS '+combos+' monthly budget combinations: researched pay, 52/12 conversion, tax estimate, separate home utilities, free choices, missing fields and overspending.');
+
+// Each transport total is exactly the sum of its applicable monthly bills.
+for(const [key,plan] of Object.entries(TRAVEL)){const sum=Object.values(plan.bills).reduce((total,amount)=>total+(amount??0),0);assert.equal(plan.cost,sum);assert.equal(calculate({travel:key}).travel,sum);}
+assert.equal(TRAVEL.bus.name,'Public Transit');assert.equal(TRAVEL.bus.bills.pass,80);assert.equal(TRAVEL.bus.bills.gas,null);assert.equal(TRAVEL.bus.bills.insurance,null);
+assert.equal(TRAVEL.car.bills.gas,150);assert.equal(TRAVEL.car.bills.insurance,160);assert.equal(TRAVEL.car.bills.maintenance,100);assert.equal(TRAVEL.car.cost,780);
+assert.equal(TRAVEL.bike.cost,20);assert.equal(TRAVEL.bike.bills.payment,null);
+console.log('PASS: transport components, N/A costs, and derived totals $20 / $80 / $780.');

@@ -13,11 +13,22 @@ export const HOMES={
  townhouse:{name:'Townhouse',description:'2 bedrooms · about 1,200 sq ft',rent:1900,electricity:150,water:75,trash:25},
  house:{name:'House',description:'3 bedrooms · about 1,800 sq ft',rent:2300,electricity:210,water:80,trash:30}
 };
-export const TRAVEL={
- bike:{name:'Walk or bike',cost:20,description:'Bike upkeep; bike already owned'},
- bus:{name:'Public transit',cost:80,description:'GoTriangle full-fare monthly cap'},
- car:{name:'Used car',cost:760,description:'Payment $350 + insurance $160 + gas $150 + upkeep $80 + registration $20'}
+// Component costs are monthly planning allowances; null means no applicable bill.
+export const TRANSPORT_ROWS=[
+ {key:'payment',label:'Car payment'},
+ {key:'gas',label:'Gas / fuel'},
+ {key:'insurance',label:'Vehicle insurance'},
+ {key:'pass',label:'Public Transit pass'},
+ {key:'maintenance',label:'Maintenance & repairs'},
+ {key:'registration',label:'Registration & vehicle taxes'}
+];
+const travelPlans={
+ bike:{name:'Walk or bike',description:'Bike already owned; monthly upkeep allowance',bills:{payment:null,gas:null,insurance:null,pass:null,maintenance:20,registration:null}},
+ bus:{name:'Public Transit',description:'GoTriangle full-fare monthly cap',bills:{payment:null,gas:null,insurance:null,pass:80,maintenance:null,registration:null}},
+ car:{name:'Used car',description:'Financed used car; about 1,000 miles per month',bills:{payment:350,gas:150,insurance:160,pass:null,maintenance:100,registration:20}}
 };
+// Derive the price from its bills so cards, breakdowns, and budget totals cannot disagree.
+export const TRAVEL=Object.fromEntries(Object.entries(travelPlans).map(([key,plan])=>[key,{...plan,cost:Object.values(plan.bills).reduce((total,value)=>total+(value??0),0)}]));
 export const WANTS={park:{name:'Free outings',cost:0},treat:{name:'Treats & streaming',cost:50},movie:{name:'Movies & hobbies',cost:100}};
 // One adult's monthly allowances. Not every item is a monthly invoice.
 export const FIXED={food:400,connectivity:125,medical:280,essentials:150,rentersInsurance:20};

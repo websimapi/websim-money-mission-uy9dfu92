@@ -1,7 +1,18 @@
 import {HOURS_PER_WEEK,MAX_SAVING,HOMES,calculate,dollars,formatMoney as money} from './budget.js';
+import {TRAVEL} from './data.js';
 document.querySelectorAll('[data-hours]').forEach(el=>el.textContent=HOURS_PER_WEEK);
 // Keep the visible comparison and the calculator on the same source of truth.
 document.querySelectorAll('[data-home-column]').forEach(cell=>{const home=HOMES[cell.dataset.homeColumn];const bill=cell.closest('[data-home-bill]').dataset.homeBill;cell.textContent=money(bill==='utilities'?home.electricity+home.water+home.trash:home[bill]);});
+document.querySelectorAll('[data-travel-column]').forEach(cell=>{
+ const plan=TRAVEL[cell.dataset.travelColumn],key=cell.closest('[data-travel-bill]').dataset.travelBill;
+ const amount=key==='total'?plan.cost:plan.bills[key];
+ cell.textContent=amount===null?'N/A':money(amount);
+ if(amount===null)cell.setAttribute('aria-label','Not applicable');
+});
+document.querySelectorAll('main [data-group="travel"]').forEach(btn=>{
+ const plan=TRAVEL[btn.dataset.value];btn.querySelector('strong').textContent=plan.name;
+ const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(plan.cost)+' '));const unit=document.createElement('small');unit.textContent='/ month';price.append(unit);
+});
 const fields=['name','date','fourWeeks','needsReason','goal','saving','needWant','savedFour','fits','biggest','surprise','percent'];
 const titles=['Earn it','Plan your needs','Save & spend','Check your plan'];
 let state={},current=0,blankPrint=false;
@@ -26,6 +37,7 @@ function budgetMessage(b){
 function render(){
  const b=calculate(state);
  document.querySelectorAll('[data-home-column]').forEach(cell=>cell.classList.toggle('chosen-column',cell.dataset.homeColumn===state.home));
+ document.querySelectorAll('[data-travel-column]').forEach(cell=>cell.classList.toggle('chosen-column',cell.dataset.travelColumn===state.travel));
  document.querySelectorAll('main [data-group]').forEach(btn=>{const chosen=String(state[btn.dataset.group])===btn.dataset.value;btn.classList.toggle('selected',chosen);btn.setAttribute('aria-pressed',String(chosen));});
  document.querySelectorAll('main [data-output]').forEach(el=>el.textContent=money(b[el.dataset.output]));
  const needsHint=document.querySelector('#needs-hint');needsHint.textContent=b.income===null?'Start on page 1 to find out how much you earn.':'Your monthly take-home pay is '+money(b.income)+'. Now plan your monthly needs.';
@@ -55,6 +67,7 @@ function preparePrint(){
   const sheet=original.cloneNode(true);sheet.classList.remove('active');sheet.removeAttribute('aria-labelledby');sheet.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
   sheet.querySelectorAll('.pocket-hint').forEach(el=>el.remove());
   sheet.querySelectorAll('[data-home-column]').forEach(cell=>cell.classList.toggle('chosen-column',!blankPrint&&cell.dataset.homeColumn===printState.home));
+  sheet.querySelectorAll('[data-travel-column]').forEach(cell=>cell.classList.toggle('chosen-column',!blankPrint&&cell.dataset.travelColumn===printState.travel));
   sheet.querySelectorAll('[data-group]').forEach(btn=>{btn.classList.toggle('selected',!blankPrint&&String(printState[btn.dataset.group])===btn.dataset.value);btn.removeAttribute('aria-pressed');});
   sheet.querySelectorAll('[data-output]').forEach(el=>{const value=b[el.dataset.output];el.textContent=value===null?'':money(value);el.classList.toggle('empty-output',value===null);});
   sheet.querySelectorAll('input,textarea').forEach(input=>{

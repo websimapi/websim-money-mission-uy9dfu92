@@ -13,7 +13,7 @@ document.querySelectorAll('main [data-group="travel"]').forEach(btn=>{
  const plan=TRAVEL[btn.dataset.value];btn.querySelector('strong').textContent=plan.name;
  const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(plan.cost)+' '));const unit=document.createElement('small');unit.textContent='/ month';price.append(unit);
 });
-const fields=['name','date','fourWeeks','needsReason','goal','saving','needWant','savedFour','fits','biggest','surprise','percent'];
+const fields=['name','date','fourWeeks','needsReason','goal','saving','savedFour','fits','biggest','surprise','percent'];
 const titles=['Earn it','Plan your needs','Save & spend','Check your plan'];
 let state={},current=0,blankPrint=false;
 const STORAGE_KEY='money-mission-monthly-v2';
@@ -23,7 +23,7 @@ try{
  else {
   const old=JSON.parse(localStorage.getItem('money-mission-v1')||'{}');
   if(old&&typeof old==='object'&&Object.keys(old).length){
-   for(const key of ['name','date','job','goal','needsReason','needWant'])if(old[key]!==undefined)state[key]=old[key];
+   for(const key of ['name','date','job','goal','needsReason'])if(old[key]!==undefined)state[key]=old[key];
    const maps={home:{'20':'apartment','300':'apartment','30':'townhouse','400':'townhouse','40':'house','500':'house'},travel:{'0':'bike','5':'bus','50':'bus','15':'car','150':'car'},want:{'0':'park','5':'treat','25':'treat','10':'movie','50':'movie'}};
    for(const [key,map] of Object.entries(maps))state[key]=map[String(old[key])]??old[key];
    document.querySelector('#migration-note').hidden=false;
@@ -42,13 +42,13 @@ function render(){
  document.querySelectorAll('main [data-output]').forEach(el=>el.textContent=money(b[el.dataset.output]));
  const needsHint=document.querySelector('#needs-hint');needsHint.textContent=b.income===null?'Start on page 1 to find out how much you earn.':'Your monthly take-home pay is '+money(b.income)+'. Now plan your monthly needs.';
  const savingHint=document.querySelector('#saving-hint');savingHint.classList.toggle('over',b.remaining!==null&&b.remaining<0);
- savingHint.textContent=b.afterNeeds===null?'Finish pages 1 and 2 to see what you can save and spend.':b.remaining!==null&&b.remaining<0?'Your plan is '+money(-b.remaining)+' over your income. Try saving less or choosing a lower cost.':b.afterNeeds<0?'Your needs alone are '+money(-b.afterNeeds)+' above your take-home pay. Try a different home or travel plan.':'After your needs, you have '+money(b.afterNeeds)+' each month for savings, fun, and leftover money.';
+ savingHint.textContent=b.afterNeeds===null?'Finish pages 1 and 2 to see what you can save and spend.':b.remaining!==null&&b.remaining<0?'Your plan is '+money(-b.remaining)+' over your income. Try saving less or choosing a lower cost.':b.afterNeeds<0?'Your housing, transportation, and living bills are '+money(-b.afterNeeds)+' above your take-home pay. Try a different home or travel plan.':'After housing, transportation, and living bills, you have '+money(b.afterNeeds)+' each month for fun money, savings, and leftover money.';
  const status=document.querySelector('#budget-status');status.classList.toggle('over',b.remaining!==null&&b.remaining<0);
  document.querySelector('.balance-box').classList.toggle('over',b.remaining!==null&&b.remaining<0);
  status.textContent=budgetMessage(b);
  const done=[b.income!==null,b.needs!==null,b.extras!==null,b.remaining!==null];
  document.querySelectorAll('[data-page]').forEach((btn,i)=>{btn.classList.toggle('complete',done[i]);btn.setAttribute('aria-label',titles[i]+(done[i]?', choices complete':''));});
- const prompts=[b.income===null?'Choose a job to start your mission.':'Your income is ready. Next, plan your needs!',b.needs===null?'Choose one home and one way to travel.':'Your needs are added up. Next, save and spend!',b.extras===null?'Enter your savings (0 is okay), then pick your fun.':b.remaining!==null&&b.remaining<0?'You can try a different amount, or check your whole plan next.':'Your choices are ready. Let’s check your plan!',b.remaining===null?'You can use the tabs above to finish any missing choices.':'You can change any choice. That’s how budgeting works.'];
+ const prompts=[b.income===null?'Choose a job to start your mission.':'Your income is ready. Next, plan your needs!',b.needs===null?'Choose one home and one way to travel.':'Your housing and travel costs are ready. Next, plan living bills and savings!',b.extras===null?'Enter your savings (0 is okay), then pick your fun.':b.remaining!==null&&b.remaining<0?'You can try a different amount, or check your whole plan next.':'Your choices are ready. Let’s check your plan!',b.remaining===null?'You can use the tabs above to finish any missing choices.':'You can change any choice. That’s how budgeting works.'];
  document.querySelector('#page-prompt').textContent=prompts[current];
 }
 function syncInputs(){fields.forEach(key=>document.querySelector('main [data-field="'+key+'"]').value=state[key]??'');validateSaving();}
@@ -89,8 +89,8 @@ function preparePrint(){
    continuation.style.setProperty('--accent','#ffe2a1');continuation.style.setProperty('--accent-light','#fff8e5');
    continuation.append(sheet.querySelector('.sheet-top').cloneNode(true));
    const tag=document.createElement('span');tag.className='mission-label';tag.textContent='MISSION 02 · ADD YOUR NEEDS';continuation.append(tag);
-   const heading=document.createElement('h2');heading.textContent='Your monthly essentials.';continuation.append(heading);
-   const intro=document.createElement('p');intro.className='intro';intro.textContent='Use the home and travel choices on the previous page. Keep rent and utilities separate, then add every monthly need.';continuation.append(intro);
+   const header=document.createElement('div');header.className='mission-header';const titleGroup=document.createElement('div');const heading=document.createElement('h2');heading.textContent='STEP 2: HOUSING & TRAVEL TOTALS';titleGroup.append(heading);const caption=document.createElement('p');caption.textContent='Record your selected home and transportation costs.';titleGroup.append(caption);const badge=document.createElement('span');badge.className='mission-badge';badge.textContent='MISSION #2';header.append(titleGroup,badge);continuation.append(header);tag.remove();
+   const intro=document.createElement('p');intro.className='intro';intro.textContent='Use your selected home and travel plan from the previous page. Add rent, utilities, transportation, and renters insurance. Daily living bills are on Step 3.';continuation.append(intro);
    while(third.nextElementSibling&&third.nextElementSibling!==footer)continuation.append(third.nextElementSibling);
    third.remove();continuation.append(footer.cloneNode(true));root.append(continuation);
   }

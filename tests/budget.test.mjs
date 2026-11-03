@@ -34,3 +34,8 @@ assert.equal(TRAVEL.bus.name,'Public Transit');assert.equal(TRAVEL.bus.bills.pas
 assert.equal(TRAVEL.car.bills.gas,150);assert.equal(TRAVEL.car.bills.insurance,160);assert.equal(TRAVEL.car.bills.maintenance,100);assert.equal(TRAVEL.car.cost,780);
 assert.equal(TRAVEL.bike.cost,20);assert.equal(TRAVEL.bike.bills.payment,null);
 console.log('PASS: transport components, N/A costs, and derived totals $20 / $80 / $780.');
+
+// Living costs appear in Step 3 only: the Step 2 subtotal includes no groceries or subscriptions.
+for(const home of Object.keys(HOMES)){const b=calculate({home,travel:'bus',want:'park',saving:100});assert.equal(b.housingNeeds,HOMES[home].rent+b.utilities+80+20);assert.equal(b.dailyLiving,985);assert.equal(b.lifestyleTotal,1085);assert.equal(b.planned,b.housingNeeds+b.lifestyleTotal);}
+assert.equal(calculate({want:'treat',saving:200}).lifestyleTotal,1235);assert.equal(FIXED.subscriptions,30);
+console.log('PASS: Step 2/3 split, $985 living bills, and lifestyle totals without duplicate bills.');

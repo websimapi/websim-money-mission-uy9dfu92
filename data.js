@@ -29,7 +29,7 @@ const travelPlans={
 };
 // Derive the price from its bills so cards, breakdowns, and budget totals cannot disagree.
 export const TRAVEL=Object.fromEntries(Object.entries(travelPlans).map(([key,plan])=>[key,{...plan,cost:Object.values(plan.bills).reduce((total,value)=>total+(value??0),0)}]));
-export const WANTS={park:{name:'Free outings',cost:0},treat:{name:'Treats & streaming',cost:50},movie:{name:'Movies & hobbies',cost:100}};
+export const WANTS={park:{name:'Free outings',cost:0},treat:{name:'Dining out & treats',cost:50},movie:{name:'Movies & hobbies',cost:100}};
 // One adult's monthly allowances. Not every item is a monthly invoice.
-export const FIXED={food:400,connectivity:125,medical:280,essentials:150,rentersInsurance:20};
+export const FIXED={food:400,internet:70,phone:55,medical:280,essentials:150,rentersInsurance:20,subscriptions:30};
 export const MAX_SAVING=20000;

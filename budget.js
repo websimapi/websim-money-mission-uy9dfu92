@@ -33,14 +33,18 @@ export function calculate(s={}){
  const utilities=selectedHome?selectedHome.electricity+selectedHome.water+selectedHome.trash:null;
  const travel=selectedTravel?.cost??null,want=selectedWant?.cost??null,saving=dollars(s.saving);
  const fixed=Object.values(FIXED).reduce((a,b)=>a+b,0);
- const housingNeeds=home===null||travel===null?null:roundMoney(home+utilities+travel+FIXED.rentersInsurance);
+ const housingSubtotal=home===null?null:roundMoney(home+utilities+FIXED.rentersInsurance);
+ const transportationSubtotal=travel;
+ const housingNeeds=housingSubtotal===null||transportationSubtotal===null?null:roundMoney(housingSubtotal+transportationSubtotal);
  const dailyLiving=fixed-FIXED.rentersInsurance;
  const needs=housingNeeds===null?null:roundMoney(housingNeeds+dailyLiving);
  const extras=saving===null||want===null?null:saving+want;
  const lifestyleTotal=extras===null?null:roundMoney(dailyLiving+extras);
  const planned=housingNeeds===null||lifestyleTotal===null?null:roundMoney(housingNeeds+lifestyleTotal);
- const remaining=income===null||planned===null?null:roundMoney(income-planned);
+ const totalMonthlyExpenses=planned; // Cash-flow allocations, including savings; not purchase spending alone.
+ const monthlySpending=housingNeeds===null||want===null?null:roundMoney(housingNeeds+dailyLiving+want);
+ const remaining=income===null||totalMonthlyExpenses===null?null:roundMoney(income-totalMonthlyExpenses);
  const afterNeeds=income===null||needs===null?null:roundMoney(income-needs);
- return {rate,weekly,annualGross,gross,taxes,income,home,utilities,travel,want,saving,needs,extras,planned,remaining,afterNeeds,taxDetails,housingNeeds,dailyLiving,lifestyleTotal,...FIXED};
+ return {rate,weekly,annualGross,gross,taxes,income,home,utilities,travel,want,saving,needs,extras,planned,remaining,afterNeeds,taxDetails,housingNeeds,housingSubtotal,transportationSubtotal,totalMonthlyExpenses,monthlySpending,dailyLiving,lifestyleTotal,...FIXED};
 }
 export const formatMoney=n=>n===null||n===undefined?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2}).format(n);

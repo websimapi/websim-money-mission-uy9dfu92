@@ -39,3 +39,9 @@ console.log('PASS: transport components, N/A costs, and derived totals $20 / $80
 for(const home of Object.keys(HOMES)){const b=calculate({home,travel:'bus',want:'park',saving:100});assert.equal(b.housingNeeds,HOMES[home].rent+b.utilities+80+20);assert.equal(b.dailyLiving,985);assert.equal(b.lifestyleTotal,1085);assert.equal(b.planned,b.housingNeeds+b.lifestyleTotal);}
 assert.equal(calculate({want:'treat',saving:200}).lifestyleTotal,1235);assert.equal(FIXED.subscriptions,30);
 console.log('PASS: Step 2/3 split, $985 living bills, and lifestyle totals without duplicate bills.');
+
+// Summary categories are independent and add up exactly once.
+const separateHousing=calculate({home:'apartment'});assert.equal(separateHousing.housingSubtotal,1505);assert.equal(separateHousing.transportationSubtotal,null);
+const separateTransit=calculate({travel:'bus'});assert.equal(separateTransit.transportationSubtotal,80);assert.equal(separateTransit.housingSubtotal,null);
+for(const home of Object.keys(HOMES))for(const travel of Object.keys(TRAVEL)){const b=calculate({job:'artist',home,travel,want:'treat',saving:200});assert.equal(b.totalMonthlyExpenses,b.housingSubtotal+b.transportationSubtotal+b.lifestyleTotal);assert.equal(b.monthlySpending+200,b.totalMonthlyExpenses);assert.equal(b.remaining,roundMoney(b.income-b.totalMonthlyExpenses));}
+console.log('PASS: housing/transportation/lifestyle subtotals, expenses B, and remaining cash A minus B.');

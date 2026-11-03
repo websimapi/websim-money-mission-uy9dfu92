@@ -32,8 +32,12 @@ try{
  }
 }catch{}
 function budgetMessage(b){
- return b.remaining===null?'Finish your career, home, travel, monthly savings amount, and fun allowance on pages 1–3.':b.remaining<0?'Not quite yet! You planned '+money(-b.remaining)+' more than your monthly take-home pay. Change a home, travel choice, or allowance, then check again.':b.remaining===0?'It fits exactly! Every dollar has a job. Your savings are still yours, but there is no extra money left.':'It fits! You have '+money(b.remaining)+' left this month, after setting aside your savings.';
+ if(b.remaining===null)return 'Complete the career, housing, transportation, fun-money and savings selections in Steps 1–3 to calculate the budget balance.';
+ if(b.remaining<0)return 'Budget deficit: monthly expenses and savings exceed take-home income by '+money(-b.remaining)+'. Reduce expenses or revise the savings allocation to balance the budget.';
+ if(b.remaining===0)return 'Balanced budget: all monthly take-home income is allocated to expenses and savings. No unallocated cash remains.';
+ return 'Budget surplus: '+money(b.remaining)+' remains after monthly expenses and planned savings. This is available for additional savings or unexpected costs.';
 }
+
 function render(){
  const b=calculate(state);
  document.querySelectorAll('[data-home-column]').forEach(cell=>cell.classList.toggle('chosen-column',cell.dataset.homeColumn===state.home));
@@ -48,7 +52,7 @@ function render(){
  status.textContent=budgetMessage(b);
  const done=[b.income!==null,b.needs!==null,b.extras!==null,b.remaining!==null];
  document.querySelectorAll('[data-page]').forEach((btn,i)=>{btn.classList.toggle('complete',done[i]);btn.setAttribute('aria-label',titles[i]+(done[i]?', choices complete':''));});
- const prompts=[b.income===null?'Choose a job to start your mission.':'Your income is ready. Next, plan your needs!',b.needs===null?'Choose one home and one way to travel.':'Your housing and travel costs are ready. Next, plan living bills and savings!',b.extras===null?'Enter your savings (0 is okay), then pick your fun.':b.remaining!==null&&b.remaining<0?'You can try a different amount, or check your whole plan next.':'Your choices are ready. Let’s check your plan!',b.remaining===null?'You can use the tabs above to finish any missing choices.':'You can change any choice. That’s how budgeting works.'];
+ const prompts=[b.income===null?'Choose a job to start your mission.':'Your income is ready. Next, plan your needs!',b.needs===null?'Choose one home and one way to travel.':'Your housing and travel costs are ready. Next, plan living bills and savings!',b.extras===null?'Enter your savings (0 is okay), then pick your fun.':b.remaining!==null&&b.remaining<0?'You can try a different amount, or check your whole plan next.':'Subtotals are complete. Review the monthly budget summary.',b.remaining===null?'You can use the tabs above to finish any missing choices.':'Review the category subtotals, net remaining cash, and reflection questions.'];
  document.querySelector('#page-prompt').textContent=prompts[current];
 }
 function syncInputs(){fields.forEach(key=>document.querySelector('main [data-field="'+key+'"]').value=state[key]??'');validateSaving();}
@@ -78,7 +82,7 @@ function preparePrint(){
   });
   // Screen-only hints are unnecessary on the printed worksheet.
   sheet.querySelectorAll('.saving-box small').forEach(el=>el.remove());
-  const budgetStatus=sheet.querySelector('.budget-status');if(budgetStatus){budgetStatus.classList.toggle('over',b.remaining!==null&&b.remaining<0);budgetStatus.textContent=b.remaining===null?'If your answer is below $0, change a choice. If it is $0 or more, your monthly plan fits!':budgetMessage(b);}
+  const budgetStatus=sheet.querySelector('.budget-status');if(budgetStatus){budgetStatus.classList.toggle('over',b.remaining!==null&&b.remaining<0);budgetStatus.textContent=b.remaining===null?'A negative balance is a deficit; zero is balanced; a positive balance is a surplus.':budgetMessage(b);}
   sheet.querySelector('.balance-box')?.classList.toggle('over',b.remaining!==null&&b.remaining<0);
   root.append(sheet);
   // Keep the new rent/utility comparison readable rather than squeezing the whole needs mission onto one page.

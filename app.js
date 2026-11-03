@@ -46,6 +46,7 @@ function budgetMessage(b){
 
 function render(){
  const b=calculate(state);
+ document.querySelectorAll('main [data-bill]').forEach(input=>{const included=b.billChoices[input.dataset.bill];input.checked=included;input.closest('.living-bill').classList.toggle('bill-unselected',!included);});
  document.querySelectorAll('[data-home-column]').forEach(cell=>cell.classList.toggle('chosen-column',cell.dataset.homeColumn===state.home));
  document.querySelectorAll('[data-travel-column]').forEach(cell=>cell.classList.toggle('chosen-column',cell.dataset.travelColumn===state.travel));
  document.querySelectorAll('main [data-group]').forEach(btn=>{const chosen=String(state[btn.dataset.group])===btn.dataset.value;btn.classList.toggle('selected',chosen);btn.setAttribute('aria-pressed',String(chosen));});
@@ -69,6 +70,9 @@ function navigate(page,focus=false){current=Math.max(0,Math.min(3,page));documen
 document.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>navigate(Number(btn.dataset.page))));
 document.querySelectorAll('main [data-group]').forEach(btn=>btn.addEventListener('click',()=>{state[btn.dataset.group]=btn.dataset.value;save();render();}));
 document.querySelectorAll('main [data-field]').forEach(input=>input.addEventListener('input',()=>{state[input.dataset.field]=input.value;if(input.dataset.field==='saving')validateSaving();save();render();}));
+document.querySelectorAll('main [data-bill]').forEach(input=>input.addEventListener('change',()=>{
+ state.bills={...calculate(state).billChoices,[input.dataset.bill]:input.checked};save();render();
+}));
 document.querySelector('#prev').addEventListener('click',()=>navigate(current-1,true));document.querySelector('#next').addEventListener('click',()=>navigate(current+1,true));
 function preparePrint(){
  document.querySelector('.print-workbook')?.remove();
@@ -80,9 +84,11 @@ function preparePrint(){
   sheet.querySelectorAll('[data-home-column]').forEach(cell=>cell.classList.toggle('chosen-column',!blankPrint&&cell.dataset.homeColumn===printState.home));
   sheet.querySelectorAll('[data-travel-column]').forEach(cell=>cell.classList.toggle('chosen-column',!blankPrint&&cell.dataset.travelColumn===printState.travel));
   sheet.querySelectorAll('[data-group]').forEach(btn=>{btn.classList.toggle('selected',!blankPrint&&String(printState[btn.dataset.group])===btn.dataset.value);btn.removeAttribute('aria-pressed');});
-  sheet.querySelectorAll('[data-output]').forEach(el=>{const value=b[el.dataset.output];el.textContent=value===null?'':money(value);el.classList.toggle('empty-output',value===null);});
+  sheet.querySelectorAll('[data-output]').forEach(el=>{const value=blankPrint&&el.dataset.output==='dailyLiving'?null:b[el.dataset.output];el.textContent=value===null?'':money(value);el.classList.toggle('empty-output',value===null);});
   sheet.querySelectorAll('[data-rate]').forEach(el=>{el.textContent=b.taxRate===null?'':String(b.taxRate)+(el.hasAttribute('data-percent')?'%':'');el.classList.toggle('empty-rate',b.taxRate===null);});
+  sheet.querySelectorAll('[data-bill-row]').forEach(row=>row.classList.toggle('bill-unselected',!blankPrint&&!b.billChoices[row.dataset.billRow]));
   sheet.querySelectorAll('input,textarea').forEach(input=>{
+   if(input.hasAttribute('data-bill')){const mark=document.createElement('span');mark.className='print-bill-check';mark.textContent=!blankPrint&&b.billChoices[input.dataset.bill]?'✓':'';mark.setAttribute('aria-hidden','true');input.replaceWith(mark);return;}
    const span=document.createElement('span');span.className=input.tagName==='TEXTAREA'?'print-answer':'print-field';
    let text=String(printState[input.dataset.field]??'');
    if(input.type==='date'&&text){const [y,m,d]=text.split('-');text=m+'/'+d+'/'+y;}

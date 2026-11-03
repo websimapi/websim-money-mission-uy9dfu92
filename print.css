@@ -69,3 +69,5 @@
 @media print{.sheet[data-sheet="0"] .section-heading{margin:2mm 0 1mm;padding-bottom:1mm}.sheet[data-sheet="0"] .jobs.three{gap:1mm}.sheet[data-sheet="0"] .mission-header{padding:3mm 4mm}}
 
 @media print{.sheet[data-sheet="0"] .jobs .job-qualification{grid-row:3}.sheet[data-sheet="0"] .tax-rate-number{font-weight:800}}
+
+@media print{.living-bill .print-bill-check{display:inline-grid;place-items:center;flex:0 0 4mm!important;width:4mm;height:4mm;border:1px solid #655c7b;border-radius:.5mm;font-family:Arial,sans-serif;font-size:10pt;line-height:1;color:#433561}.living-bill[data-required-bill] .bill-icon{margin-left:6mm}.living-bill.bill-unselected{background:#faf9fc}.blank-workbook .living-bill{background:transparent}}

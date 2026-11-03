@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {calculate,dollars,estimateTaxes,roundMoney,formatMoney} from '../budget.js';
-import {JOBS,HOMES,TRAVEL,WANTS,FIXED,normalizeJobKey} from '../data.js';
+import {calculate,isBillIncluded,dollars,estimateTaxes,roundMoney,formatMoney} from '../budget.js';
+import {JOBS,HOMES,TRAVEL,WANTS,FIXED,OPTIONAL_BILLS,normalizeJobKey} from '../data.js';
 assert.equal(calculate({}).remaining,null);
 for(const x of ['',null,undefined,-1,1.5,20001,'bad',Infinity,true,{}])assert.equal(dollars(x),null);
 assert.equal(dollars('0'),0);assert.equal(dollars('20000'),20000);
@@ -61,3 +61,13 @@ console.log('PASS: three no-degree entry paths, one representative trades catego
 
 for(const key of Object.keys(JOBS)){const b=calculate({job:key});assert.equal(b.taxRate,20);assert.equal(b.taxes,Math.floor(b.gross/5));assert.equal(b.income,b.gross-b.taxes);}
 console.log('PASS: fixed 20% rate for every career, including blank-workbook rate, and consistent take-home pay.');
+
+// Every combination of optional bills changes all dependent totals exactly once.
+const base={job:'artist',home:'apartment',travel:'bus',want:'treat',saving:200};
+for(let mask=0;mask<32;mask++){
+ const bills=Object.fromEntries(OPTIONAL_BILLS.map((key,i)=>[key,Boolean(mask&(1<<i))]));const b=calculate({...base,bills});const living=400+OPTIONAL_BILLS.reduce((sum,key)=>sum+(bills[key]?FIXED[key]:0),0);
+ assert.equal(b.dailyLiving,living);assert.equal(b.lifestyleTotal,living+250);assert.equal(b.totalMonthlyExpenses,b.housingSubtotal+b.transportationSubtotal+living+250);assert.equal(b.remaining,b.income-b.totalMonthlyExpenses);assert.equal(b.afterNeeds,b.income-b.housingSubtotal-b.transportationSubtotal-living);assert.equal(b.food,400);assert.deepEqual(b.billChoices,bills);
+}
+assert.equal(calculate({bills:{food:false,internet:false,phone:false,medical:false,essentials:false,subscriptions:false}}).dailyLiving,400);
+assert.equal(calculate({}).dailyLiving,985);assert.equal(calculate({bills:{internet:false}}).dailyLiving,915);assert.equal(calculate({bills:null}).dailyLiving,985);assert.equal(calculate({bills:[]}).dailyLiving,985);assert.equal(isBillIncluded({bills:{food:false}},'food'),true);assert.equal(calculate({bills:{medical:false}}).medical,280);
+console.log('PASS: all 32 optional-bill combinations, mandatory groceries, unchanged price labels, backward-compatible defaults, and exact final totals.');

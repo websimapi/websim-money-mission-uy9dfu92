@@ -41,4 +41,5 @@ export const TRAVEL=Object.fromEntries(Object.entries(travelPlans).map(([key,pla
 export const WANTS={park:{name:'Free outings',cost:0},treat:{name:'Dining out & treats',cost:50},movie:{name:'Movies & hobbies',cost:100}};
 // One adult's monthly allowances. Not every item is a monthly invoice.
 export const FIXED={food:400,internet:70,phone:55,medical:280,essentials:150,rentersInsurance:20,subscriptions:30};
+export const OPTIONAL_BILLS=['internet','phone','medical','essentials','subscriptions'];
 export const MAX_SAVING=20000;

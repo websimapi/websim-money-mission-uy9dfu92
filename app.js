@@ -1,5 +1,5 @@
 import {HOURS_PER_WEEK,MAX_SAVING,HOMES,calculate,dollars,formatMoney as money} from './budget.js';
-import {TRAVEL} from './data.js';
+import {TRAVEL,JOBS} from './data.js';
 document.querySelectorAll('[data-hours]').forEach(el=>el.textContent=HOURS_PER_WEEK);
 // Keep the visible comparison and the calculator on the same source of truth.
 document.querySelectorAll('[data-home-column]').forEach(cell=>{const home=HOMES[cell.dataset.homeColumn];const bill=cell.closest('[data-home-bill]').dataset.homeBill;cell.textContent=money(bill==='utilities'?home.electricity+home.water+home.trash:home[bill]);});
@@ -12,6 +12,10 @@ document.querySelectorAll('[data-travel-column]').forEach(cell=>{
 document.querySelectorAll('main [data-group="travel"]').forEach(btn=>{
  const plan=TRAVEL[btn.dataset.value];btn.querySelector('strong').textContent=plan.name;btn.querySelector('.transport-description').textContent=plan.description;
  const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(plan.cost)+' '));const unit=document.createElement('small');unit.textContent='/ month';price.append(unit);
+});
+document.querySelectorAll('main [data-group="job"]').forEach(btn=>{
+ const job=JOBS[btn.dataset.value];btn.querySelector('.job-copy strong').textContent=job.name;btn.querySelector('.job-copy small').textContent=job.description;btn.querySelector('.qualification-value').textContent=job.qualification;
+ const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(job.rate)+' '));const unit=document.createElement('small');unit.textContent='/ hour';price.append(unit);
 });
 const fields=['name','date','fourWeeks','needsReason','goal','saving','savedFour','fits','biggest','surprise','percent'];
 const titles=['Earn it','Plan your needs','Save & spend','Check your plan'];
@@ -110,4 +114,9 @@ function finishPrint(){blankPrint=false;document.querySelector('.print-workbook'
 window.addEventListener('beforeprint',preparePrint);window.addEventListener('afterprint',finishPrint);
 document.querySelector('#print-blank').addEventListener('click',()=>{blankPrint=true;preparePrint();window.print();});
 document.querySelector('#print-work').addEventListener('click',()=>{if(!validateSaving()){navigate(2,true);document.querySelector('main [data-field="saving"]').reportValidity();return;}blankPrint=false;preparePrint();window.print();});
+for(const key of ['fourWeeks','savedFour','percent']){
+ const input=document.querySelector('main [data-field="'+key+'"]');
+ const normalize=()=>{const raw=String(state[key]??'').trim();if(!/^\$?\s*\d[\d,]*(?:\.\d+)?\s*%?$/.test(raw))return;const n=Number(raw.replace(/[$,%\s]/g,''));if(!Number.isFinite(n))return;state[key]=String(Math.floor(n))+(raw.endsWith('%')?'%':'');input.value=state[key];};
+ normalize();input.addEventListener('change',()=>{normalize();save();});
+}
 syncInputs();navigate(0);

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {calculate,dollars,estimateTaxes,roundMoney} from '../budget.js';
+import {calculate,dollars,estimateTaxes,roundMoney,formatMoney} from '../budget.js';
 import {JOBS,HOMES,TRAVEL,WANTS,FIXED} from '../data.js';
 assert.equal(calculate({}).remaining,null);
 for(const x of ['',null,undefined,-1,1.5,20001,'bad',Infinity,true,{}])assert.equal(dollars(x),null);
@@ -8,12 +8,12 @@ for(const [job,data] of Object.entries(JOBS)){
  const b=calculate({job});assert.equal(b.weekly,roundMoney(data.rate*40));assert.equal(b.gross,roundMoney(data.rate*40*52/12));
  assert.ok(b.taxes>0&&b.income<b.gross);assert.equal(b.income,roundMoney(b.gross-b.taxes));
 }
-assert.equal(calculate({job:'artist'}).gross,5246.8);
-assert.equal(calculate({job:'animal'}).gross,3948.53);
-assert.equal(calculate({job:'coder'}).gross,11332.53);
+assert.equal(calculate({job:'artist'}).gross,5200);
+assert.equal(calculate({job:'animal'}).gross,3813);
+assert.equal(calculate({job:'coder'}).gross,11266);
 // Federal brackets are progressive, and no tax band applies to income below its floor.
 assert.deepEqual(estimateTaxes(0),{federal:0,state:0,fica:0});
-const t=estimateTaxes(28500);assert.equal(t.federal,103.33);
+const t=estimateTaxes(28500);assert.equal(t.federal,103);
 assert.equal(calculate({home:'20'}).home,null);assert.equal(calculate({job:'toString'}).gross,null);
 for(const [home,data] of Object.entries(HOMES)){
  const b=calculate({home,travel:'bike'});assert.equal(b.home,data.rent);assert.equal(b.utilities,data.electricity+data.water+data.trash);
@@ -45,3 +45,7 @@ const separateHousing=calculate({home:'apartment'});assert.equal(separateHousing
 const separateTransit=calculate({travel:'bus'});assert.equal(separateTransit.transportationSubtotal,80);assert.equal(separateTransit.housingSubtotal,null);
 for(const home of Object.keys(HOMES))for(const travel of Object.keys(TRAVEL)){const b=calculate({job:'artist',home,travel,want:'treat',saving:200});assert.equal(b.totalMonthlyExpenses,b.housingSubtotal+b.transportationSubtotal+b.lifestyleTotal);assert.equal(b.monthlySpending+200,b.totalMonthlyExpenses);assert.equal(b.remaining,roundMoney(b.income-b.totalMonthlyExpenses));}
 console.log('PASS: housing/transportation/lifestyle subtotals, expenses B, and remaining cash A minus B.');
+
+assert.equal(Object.keys(JOBS).length,6);for(const [key,job] of Object.entries(JOBS)){assert.equal(job.rate,Math.floor(job.publishedRate));assert.ok(job.qualification);const b=calculate({job:key,home:'apartment',travel:'bus',want:'park',saving:200});for(const n of Object.values(b)){if(typeof n==='number')assert.ok(Number.isInteger(n),key+' has an integer amount');}assert.equal(b.taxes,Object.values(b.taxDetails).reduce((a,n)=>a+n,0));assert.equal(b.income+b.taxes,b.gross);assert.equal(b.remaining+b.totalMonthlyExpenses,b.income);}
+assert.equal(roundMoney(25.99),25);assert.equal(roundMoney(-25.01),-26);assert.equal(formatMoney(25.99),'$25');assert.equal(formatMoney(-25.01),'-$26');assert.equal(formatMoney(null),'—');
+console.log('PASS: six career qualifications, floor rounding, integer tax components, and reconciling whole-dollar totals.');

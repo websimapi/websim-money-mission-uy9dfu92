@@ -1,10 +1,15 @@
 // Research notes, source dates, and scenario assumptions are documented in sources.html.
 export const MODEL={location:'Raleigh, North Carolina',household:'One adult, no children',taxYear:2026,hoursPerWeek:40,weeksPerYear:52,monthsPerYear:12};
-// O*NET OnLine: 2025 U.S. median hourly wages (not entry-level or Raleigh-specific wages).
+// O*NET 2025 national medians, floored for this whole-dollar workbook.
+// publishedRate preserves the source benchmark; rate is the rate actually used in all calculations.
+// Typical qualifications are not universal hiring requirements; see sources.html.
 export const JOBS={
- artist:{name:'Graphic designer',rate:30.27,annualMedian:62960},
- animal:{name:'Veterinary technician',rate:22.78,annualMedian:47380},
- coder:{name:'Software developer',rate:65.38,annualMedian:135980}
+ artist:{name:'Graphic designer',description:'Create visual designs',qualification:'Bachelor’s degree',rate:30,publishedRate:30.27,annualMedian:62960},
+ animal:{name:'Veterinary technician',description:'Help care for animals',qualification:'Associate degree + state credential',rate:22,publishedRate:22.78,annualMedian:47380},
+ coder:{name:'Software developer',description:'Build apps and programs',qualification:'Bachelor’s degree',rate:65,publishedRate:65.38,annualMedian:135980},
+ electrician:{name:'Electrician',description:'Install and repair electrical systems',qualification:'High school + apprenticeship',rate:30,publishedRate:30.38,annualMedian:63190},
+ plumber:{name:'Plumber',description:'Install and repair water pipes',qualification:'High school + apprenticeship',rate:30,publishedRate:30.67,annualMedian:63800},
+ hvac:{name:'HVAC technician',description:'Service heating and cooling systems',qualification:'Trade training; EPA certification for refrigerant work',rate:29,publishedRate:29.33,annualMedian:61010}
 };
 // Illustrative rental-only prices, not measured averages for these property types.
 // All-electric homes: 700/1,000/1,400 kWh per month at an assumed $0.15/kWh.

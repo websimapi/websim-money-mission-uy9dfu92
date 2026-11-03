@@ -1,7 +1,8 @@
 import {MODEL,JOBS,HOMES,TRAVEL,WANTS,FIXED,MAX_SAVING} from './data.js';
 export {JOBS,HOMES,TRAVEL,WANTS,FIXED,MAX_SAVING} from './data.js';
 export const HOURS_PER_WEEK=MODEL.hoursPerWeek;
-export const roundMoney=n=>Math.round((n+Number.EPSILON)*100)/100;
+// Floor each calculated amount, not just its label, so the whole-dollar rows reconcile.
+export const roundMoney=n=>Math.floor(n);
 export function dollars(raw){
  if(raw===null||raw===undefined||typeof raw==='boolean'||typeof raw==='object'||String(raw).trim()==='')return null;
  const n=Number(raw);return Number.isFinite(n)&&Number.isInteger(n)&&n>=0&&n<=MAX_SAVING?n:null;
@@ -47,4 +48,4 @@ export function calculate(s={}){
  const afterNeeds=income===null||needs===null?null:roundMoney(income-needs);
  return {rate,weekly,annualGross,gross,taxes,income,home,utilities,travel,want,saving,needs,extras,planned,remaining,afterNeeds,taxDetails,housingNeeds,housingSubtotal,transportationSubtotal,totalMonthlyExpenses,monthlySpending,dailyLiving,lifestyleTotal,...FIXED};
 }
-export const formatMoney=n=>n===null||n===undefined?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2}).format(n);
+export const formatMoney=n=>n===null||n===undefined?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(roundMoney(n));

@@ -1,5 +1,5 @@
 import {HOURS_PER_WEEK,MAX_SAVING,HOMES,calculate,dollars,formatMoney as money} from './budget.js';
-import {TRAVEL,JOBS} from './data.js';
+import {TRAVEL,JOBS,normalizeJobKey} from './data.js';
 document.querySelectorAll('[data-hours]').forEach(el=>el.textContent=HOURS_PER_WEEK);
 // Keep the visible comparison and the calculator on the same source of truth.
 document.querySelectorAll('[data-home-column]').forEach(cell=>{const home=HOMES[cell.dataset.homeColumn];const bill=cell.closest('[data-home-bill]').dataset.homeBill;cell.textContent=money(bill==='utilities'?home.electricity+home.water+home.trash:home[bill]);});
@@ -35,6 +35,8 @@ try{
   }
  }
 }catch{}
+const normalizedJob=normalizeJobKey(state.job);
+if(normalizedJob!==state.job){state.job=normalizedJob;try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{}}
 function budgetMessage(b){
  if(b.remaining===null)return 'Complete the career, housing, transportation, fun-money and savings selections in Steps 1–3 to calculate the budget balance.';
  if(b.remaining<0)return 'Budget deficit: monthly expenses and savings exceed take-home income by '+money(-b.remaining)+'. Reduce expenses or revise the savings allocation to balance the budget.';

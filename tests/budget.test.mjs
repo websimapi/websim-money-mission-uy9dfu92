@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {calculate,dollars,estimateTaxes,roundMoney,formatMoney} from '../budget.js';
-import {JOBS,HOMES,TRAVEL,WANTS,FIXED} from '../data.js';
+import {JOBS,HOMES,TRAVEL,WANTS,FIXED,normalizeJobKey} from '../data.js';
 assert.equal(calculate({}).remaining,null);
 for(const x of ['',null,undefined,-1,1.5,20001,'bad',Infinity,true,{}])assert.equal(dollars(x),null);
 assert.equal(dollars('0'),0);assert.equal(dollars('20000'),20000);
@@ -46,10 +46,15 @@ const separateTransit=calculate({travel:'bus'});assert.equal(separateTransit.tra
 for(const home of Object.keys(HOMES))for(const travel of Object.keys(TRAVEL)){const b=calculate({job:'artist',home,travel,want:'treat',saving:200});assert.equal(b.totalMonthlyExpenses,b.housingSubtotal+b.transportationSubtotal+b.lifestyleTotal);assert.equal(b.monthlySpending+200,b.totalMonthlyExpenses);assert.equal(b.remaining,roundMoney(b.income-b.totalMonthlyExpenses));}
 console.log('PASS: housing/transportation/lifestyle subtotals, expenses B, and remaining cash A minus B.');
 
-assert.equal(Object.keys(JOBS).length,6);for(const [key,job] of Object.entries(JOBS)){assert.equal(job.rate,Math.floor(job.publishedRate));assert.ok(job.qualification);const b=calculate({job:key,home:'apartment',travel:'bus',want:'park',saving:200});for(const n of Object.values(b)){if(typeof n==='number')assert.ok(Number.isInteger(n),key+' has an integer amount');}assert.ok(Number.isInteger(b.taxRate));assert.equal(b.biweekly,b.weekly*2);assert.equal(b.gross,b.biweekly*2);assert.equal(b.taxes,Math.floor(b.gross*b.taxRate/100));assert.equal(b.annualGross,b.biweekly*26);assert.equal(b.income+b.taxes,b.gross);assert.equal(b.remaining+b.totalMonthlyExpenses,b.income);}
+assert.equal(Object.keys(JOBS).length,7);for(const [key,job] of Object.entries(JOBS)){assert.equal(job.rate,Math.floor(job.benchmarkRate));assert.ok(job.qualification);const b=calculate({job:key,home:'apartment',travel:'bus',want:'park',saving:200});for(const n of Object.values(b)){if(typeof n==='number')assert.ok(Number.isInteger(n),key+' has an integer amount');}assert.ok(Number.isInteger(b.taxRate));assert.equal(b.biweekly,b.weekly*2);assert.equal(b.gross,b.biweekly*2);assert.equal(b.taxes,Math.floor(b.gross*b.taxRate/100));assert.equal(b.annualGross,b.biweekly*26);assert.equal(b.income+b.taxes,b.gross);assert.equal(b.remaining+b.totalMonthlyExpenses,b.income);}
 assert.equal(roundMoney(25.99),25);assert.equal(roundMoney(-25.01),-26);assert.equal(formatMoney(25.99),'$25');assert.equal(formatMoney(-25.01),'-$26');assert.equal(formatMoney(null),'—');
-console.log('PASS: six career qualifications, floor rounding, integer tax components, and reconciling whole-dollar totals.');
+console.log('PASS: seven career qualifications, floor rounding, integer tax components, and reconciling whole-dollar totals.');
 
 assert.equal(calculate({}).biweekly,null);assert.equal(calculate({}).taxRate,null);assert.equal(calculate({}).taxes,null);
 const pay=calculate({job:'artist'});assert.equal(pay.weekly,1200);assert.equal(pay.biweekly,2400);assert.equal(pay.gross,4800);assert.equal(pay.taxRate,19);assert.equal(pay.taxes,912);assert.equal(pay.income,3888);assert.equal(pay.annualGross,62400);assert.notEqual(pay.gross,pay.annualGross/12);
 console.log('PASS: weekly, biweekly, two-check monthly gross, whole-percent tax equation, and net pay.');
+
+for(const old of ['electrician','plumber','hvac']){assert.equal(normalizeJobKey(old),'trades');assert.deepEqual(calculate({job:old}),calculate({job:'trades'}));assert.ok(!Object.hasOwn(JOBS,old));}
+for(const key of ['office','restaurant','retail']){assert.match(JOBS[key].qualification,/No degree or trade certificate/);assert.ok(calculate({job:key}).income>0);}
+assert.equal(calculate({job:'office'}).taxRate,17);assert.equal(calculate({job:'restaurant'}).taxRate,14);assert.equal(calculate({job:'retail'}).taxRate,15);
+console.log('PASS: three no-degree entry paths, one representative trades category, and legacy selection migration.');

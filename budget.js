@@ -1,4 +1,4 @@
-import {MODEL,JOBS,HOMES,TRAVEL,WANTS,FIXED,MAX_SAVING} from './data.js';
+import {MODEL,JOBS,HOMES,TRAVEL,WANTS,FIXED,MAX_SAVING,normalizeJobKey} from './data.js';
 export {JOBS,HOMES,TRAVEL,WANTS,FIXED,MAX_SAVING} from './data.js';
 export const HOURS_PER_WEEK=MODEL.hoursPerWeek;
 // Floor each calculated amount, not just its label, so the whole-dollar rows reconcile.
@@ -23,7 +23,7 @@ export function estimateTaxes(annual){
  return {federal:roundMoney(federal/12),state:roundMoney(state/12),fica:roundMoney(fica/12)};
 }
 export function calculate(s={}){
- const job=lookup(JOBS,s.job),selectedHome=lookup(HOMES,s.home),selectedTravel=lookup(TRAVEL,s.travel),selectedWant=lookup(WANTS,s.want);
+ const job=lookup(JOBS,normalizeJobKey(s.job)),selectedHome=lookup(HOMES,s.home),selectedTravel=lookup(TRAVEL,s.travel),selectedWant=lookup(WANTS,s.want);
  const rate=job?.rate??null,weekly=rate===null?null:roundMoney(rate*MODEL.hoursPerWeek);
  const annualGross=weekly===null?null:roundMoney(weekly*MODEL.weeksPerYear);
  // Budget only two biweekly checks; annual earnings still use 52 weeks (26 checks).

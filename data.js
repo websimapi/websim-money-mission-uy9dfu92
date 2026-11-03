@@ -23,9 +23,9 @@ export const TRANSPORT_ROWS=[
  {key:'registration',label:'Registration & vehicle taxes'}
 ];
 const travelPlans={
- bike:{name:'Walk or bike',description:'Bike already owned; monthly upkeep allowance',bills:{payment:null,gas:null,insurance:null,pass:null,maintenance:20,registration:null}},
- bus:{name:'Public Transit',description:'GoTriangle full-fare monthly cap',bills:{payment:null,gas:null,insurance:null,pass:80,maintenance:null,registration:null}},
- car:{name:'Used car',description:'Financed used car; about 1,000 miles per month',bills:{payment:350,gas:150,insurance:160,pass:null,maintenance:100,registration:20}}
+ bike:{name:'Walk or bike',description:'Already-owned bicycle. $20 per month set aside for upkeep.',bills:{payment:null,gas:null,insurance:null,pass:null,maintenance:20,registration:null}},
+ bus:{name:'Public Transit',description:'GoTriangle adult fare cap: up to $80 per month.',bills:{payment:null,gas:null,insurance:null,pass:80,maintenance:null,registration:null}},
+ car:{name:'Car',description:'Financed car; about 1,000 miles per month. Includes payment, fuel, insurance, upkeep and registration.',bills:{payment:350,gas:150,insurance:160,pass:null,maintenance:100,registration:20}}
 };
 // Derive the price from its bills so cards, breakdowns, and budget totals cannot disagree.
 export const TRAVEL=Object.fromEntries(Object.entries(travelPlans).map(([key,plan])=>[key,{...plan,cost:Object.values(plan.bills).reduce((total,value)=>total+(value??0),0)}]));

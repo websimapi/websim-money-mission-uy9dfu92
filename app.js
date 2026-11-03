@@ -10,7 +10,7 @@ document.querySelectorAll('[data-travel-column]').forEach(cell=>{
  if(amount===null)cell.setAttribute('aria-label','Not applicable');
 });
 document.querySelectorAll('main [data-group="travel"]').forEach(btn=>{
- const plan=TRAVEL[btn.dataset.value];btn.querySelector('strong').textContent=plan.name;
+ const plan=TRAVEL[btn.dataset.value];btn.querySelector('strong').textContent=plan.name;btn.querySelector('.transport-description').textContent=plan.description;
  const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(plan.cost)+' '));const unit=document.createElement('small');unit.textContent='/ month';price.append(unit);
 });
 const fields=['name','date','fourWeeks','needsReason','goal','saving','savedFour','fits','biggest','surprise','percent'];

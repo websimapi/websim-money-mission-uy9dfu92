@@ -26,9 +26,16 @@ export function calculate(s={}){
  const job=lookup(JOBS,s.job),selectedHome=lookup(HOMES,s.home),selectedTravel=lookup(TRAVEL,s.travel),selectedWant=lookup(WANTS,s.want);
  const rate=job?.rate??null,weekly=rate===null?null:roundMoney(rate*MODEL.hoursPerWeek);
  const annualGross=weekly===null?null:roundMoney(weekly*MODEL.weeksPerYear);
- const gross=annualGross===null?null:roundMoney(annualGross/MODEL.monthsPerYear);
- const taxDetails=annualGross===null?null:estimateTaxes(annualGross);
- const taxes=taxDetails===null?null:roundMoney(taxDetails.federal+taxDetails.state+taxDetails.fica);
+ // Budget only two biweekly checks; annual earnings still use 52 weeks (26 checks).
+ const biweekly=weekly===null?null:roundMoney(weekly*2);
+ const gross=biweekly===null?null:roundMoney(biweekly*2);
+ // Derive a whole-percent blended teaching estimate from the existing 2026 tax model.
+ // Benchmark components are averaged over the full year, not the two-check budget month.
+ const averageMonthlyGross=annualGross===null?null:annualGross/MODEL.monthsPerYear;
+ const referenceTaxDetails=annualGross===null?null:estimateTaxes(annualGross);
+ const referenceTaxes=referenceTaxDetails===null?null:Object.values(referenceTaxDetails).reduce((a,n)=>a+n,0);
+ const taxRate=referenceTaxes===null?null:Math.floor(referenceTaxes/averageMonthlyGross*100);
+ const taxes=gross===null||taxRate===null?null:roundMoney(gross*taxRate/100);
  const income=gross===null?null:roundMoney(gross-taxes);
  const home=selectedHome?.rent??null;
  const utilities=selectedHome?selectedHome.electricity+selectedHome.water+selectedHome.trash:null;
@@ -46,6 +53,6 @@ export function calculate(s={}){
  const monthlySpending=housingNeeds===null||want===null?null:roundMoney(housingNeeds+dailyLiving+want);
  const remaining=income===null||totalMonthlyExpenses===null?null:roundMoney(income-totalMonthlyExpenses);
  const afterNeeds=income===null||needs===null?null:roundMoney(income-needs);
- return {rate,weekly,annualGross,gross,taxes,income,home,utilities,travel,want,saving,needs,extras,planned,remaining,afterNeeds,taxDetails,housingNeeds,housingSubtotal,transportationSubtotal,totalMonthlyExpenses,monthlySpending,dailyLiving,lifestyleTotal,...FIXED};
+ return {rate,weekly,biweekly,annualGross,gross,taxRate,taxes,income,home,utilities,travel,want,saving,needs,extras,planned,remaining,afterNeeds,referenceTaxDetails,housingNeeds,housingSubtotal,transportationSubtotal,totalMonthlyExpenses,monthlySpending,dailyLiving,lifestyleTotal,...FIXED};
 }
 export const formatMoney=n=>n===null||n===undefined?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(roundMoney(n));

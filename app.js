@@ -14,7 +14,7 @@ document.querySelectorAll('main [data-group="travel"]').forEach(btn=>{
  const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(plan.cost)+' '));const unit=document.createElement('small');unit.textContent='/ month';price.append(unit);
 });
 document.querySelectorAll('main [data-group="job"]').forEach(btn=>{
- const job=JOBS[btn.dataset.value];btn.querySelector('.job-copy strong').textContent=job.name;btn.querySelector('.job-copy small').textContent=job.description;btn.querySelector('.qualification-value').textContent=job.qualification;
+ const job=JOBS[btn.dataset.value];btn.querySelector('.job-copy strong').textContent=job.name;btn.querySelector('.job-copy small').textContent=job.description;btn.querySelector('.qualification-value').textContent=job.qualification;btn.querySelector('[data-career-tax]').textContent='Est. combined tax rate: '+calculate({job:btn.dataset.value}).taxRate+'%';
  const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(job.rate)+' '));const unit=document.createElement('small');unit.textContent='/ hour';price.append(unit);
 });
 const fields=['name','date','fourWeeks','needsReason','goal','saving','savedFour','fits','biggest','surprise','percent'];
@@ -48,6 +48,7 @@ function render(){
  document.querySelectorAll('[data-travel-column]').forEach(cell=>cell.classList.toggle('chosen-column',cell.dataset.travelColumn===state.travel));
  document.querySelectorAll('main [data-group]').forEach(btn=>{const chosen=String(state[btn.dataset.group])===btn.dataset.value;btn.classList.toggle('selected',chosen);btn.setAttribute('aria-pressed',String(chosen));});
  document.querySelectorAll('main [data-output]').forEach(el=>el.textContent=money(b[el.dataset.output]));
+ document.querySelectorAll('main [data-rate]').forEach(el=>el.textContent=b.taxRate===null?'—':String(b.taxRate)+(el.hasAttribute('data-percent')?'%':''));
  const needsHint=document.querySelector('#needs-hint');needsHint.textContent=b.income===null?'Start on page 1 to find out how much you earn.':'Your monthly take-home pay is '+money(b.income)+'. Now plan your monthly needs.';
  const savingHint=document.querySelector('#saving-hint');savingHint.classList.toggle('over',b.remaining!==null&&b.remaining<0);
  savingHint.textContent=b.afterNeeds===null?'Finish pages 1 and 2 to see what you can save and spend.':b.remaining!==null&&b.remaining<0?'Your plan is '+money(-b.remaining)+' over your income. Try saving less or choosing a lower cost.':b.afterNeeds<0?'Your housing, transportation, and living bills are '+money(-b.afterNeeds)+' above your take-home pay. Try a different home or travel plan.':'After housing, transportation, and living bills, you have '+money(b.afterNeeds)+' each month for fun money, savings, and leftover money.';
@@ -78,6 +79,7 @@ function preparePrint(){
   sheet.querySelectorAll('[data-travel-column]').forEach(cell=>cell.classList.toggle('chosen-column',!blankPrint&&cell.dataset.travelColumn===printState.travel));
   sheet.querySelectorAll('[data-group]').forEach(btn=>{btn.classList.toggle('selected',!blankPrint&&String(printState[btn.dataset.group])===btn.dataset.value);btn.removeAttribute('aria-pressed');});
   sheet.querySelectorAll('[data-output]').forEach(el=>{const value=b[el.dataset.output];el.textContent=value===null?'':money(value);el.classList.toggle('empty-output',value===null);});
+  sheet.querySelectorAll('[data-rate]').forEach(el=>{el.textContent=b.taxRate===null?'':String(b.taxRate)+(el.hasAttribute('data-percent')?'%':'');el.classList.toggle('empty-rate',b.taxRate===null);});
   sheet.querySelectorAll('input,textarea').forEach(input=>{
    const span=document.createElement('span');span.className=input.tagName==='TEXTAREA'?'print-answer':'print-field';
    let text=String(printState[input.dataset.field]??'');

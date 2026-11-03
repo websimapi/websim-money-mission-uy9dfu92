@@ -22,6 +22,8 @@ export const HOMES={
  townhouse:{name:'Townhouse',description:'2 bedrooms · about 1,200 sq ft',rent:1900,electricity:150,water:75,trash:25},
  house:{name:'House',description:'3 bedrooms · about 1,800 sq ft',rent:2300,electricity:210,water:80,trash:30}
 };
+// Two adults split this same townhouse scenario. Each person's bill share is floored.
+HOMES.shared={name:'Shared home / rent a room',description:'Private bedroom · 1 roommate',rent:Math.floor(HOMES.townhouse.rent/2),electricity:Math.floor(HOMES.townhouse.electricity/2),water:Math.floor(HOMES.townhouse.water/2),trash:Math.floor(HOMES.townhouse.trash/2)};
 // Component costs are monthly planning allowances; null means no applicable bill.
 export const TRANSPORT_ROWS=[
  {key:'payment',label:'Car payment'},
@@ -38,7 +40,24 @@ const travelPlans={
 };
 // Derive the price from its bills so cards, breakdowns, and budget totals cannot disagree.
 export const TRAVEL=Object.fromEntries(Object.entries(travelPlans).map(([key,plan])=>[key,{...plan,cost:Object.values(plan.bills).reduce((total,value)=>total+(value??0),0)}]));
-export const WANTS={park:{name:'Free outings',cost:0},treat:{name:'Dining out & treats',cost:50},movie:{name:'Movies & hobbies',cost:100}};
+// Weekly spending allowances, not guaranteed prices per visit. Subscriptions are separate.
+export const FUN_OPTIONS={
+ park:{name:'Parks & free events',icon:'🌳',cost:0},
+ coffee:{name:'Coffee & café snacks',icon:'☕',cost:10},
+ lunch:{name:'Lunch out',icon:'🥪',cost:12},
+ dinner:{name:'Dinner out',icon:'🍽️',cost:25},
+ movie:{name:'Movie theater visits',icon:'🎟️',cost:15},
+ dessert:{name:'Ice cream & desserts',icon:'🍦',cost:8},
+ books:{name:'Books & magazines',icon:'📚',cost:10},
+ crafts:{name:'Art & craft supplies',icon:'🎨',cost:12},
+ games:{name:'Game purchases (not subscriptions)',icon:'🎮',cost:10},
+ sports:{name:'Sports & recreation',icon:'🏀',cost:15},
+ events:{name:'Concerts & events fund',icon:'🎵',cost:20},
+ museum:{name:'Museums & attractions',icon:'🏛️',cost:12}
+};
+export const WANTS=FUN_OPTIONS;
+export const MAX_FUN_CHOICES=4;
+export const FUN_WEEKS_PER_MONTH=4;
 // One adult's monthly allowances. Not every item is a monthly invoice.
 export const FIXED={food:400,internet:70,phone:55,medical:280,essentials:150,rentersInsurance:20,subscriptions:30};
 export const OPTIONAL_BILLS=['internet','phone','medical','essentials','subscriptions'];

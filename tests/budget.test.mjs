@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {calculate,isBillIncluded,dollars,estimateTaxes,roundMoney,formatMoney} from '../budget.js';
-import {JOBS,HOMES,TRAVEL,WANTS,FIXED,OPTIONAL_BILLS,normalizeJobKey} from '../data.js';
+import {calculate,normalizeFunSelection,isBillIncluded,dollars,estimateTaxes,roundMoney,formatMoney} from '../budget.js';
+import {JOBS,HOMES,TRAVEL,WANTS,FIXED,OPTIONAL_BILLS,FUN_OPTIONS,MAX_FUN_CHOICES,FUN_WEEKS_PER_MONTH,normalizeJobKey} from '../data.js';
 assert.equal(calculate({}).remaining,null);
 for(const x of ['',null,undefined,-1,1.5,20001,'bad',Infinity,true,{}])assert.equal(dollars(x),null);
 assert.equal(dollars('0'),0);assert.equal(dollars('20000'),20000);
@@ -21,7 +21,7 @@ for(const [home,data] of Object.entries(HOMES)){
 }
 assert.equal(calculate({home:'apartment'}).utilities,185);assert.equal(calculate({home:'townhouse'}).utilities,250);assert.equal(calculate({home:'house'}).utilities,320);
 let combos=0;for(const job of Object.keys(JOBS))for(const home of Object.keys(HOMES))for(const travel of Object.keys(TRAVEL))for(const want of Object.keys(WANTS))for(const saving of [0,100,500,10000]){
- const b=calculate({job,home,travel,want,saving});assert.equal(b.planned,b.needs+WANTS[want].cost+saving);assert.equal(b.remaining,roundMoney(b.income-b.planned));combos++;
+ const b=calculate({job,home,travel,fun:[want],saving});assert.equal(b.planned,b.needs+WANTS[want].cost*FUN_WEEKS_PER_MONTH+saving);assert.equal(b.remaining,roundMoney(b.income-b.planned));combos++;
 }
 const over=calculate({job:'animal',home:'house',travel:'car',want:'movie',saving:0});assert.ok(over.remaining<0);
 const cheap=calculate({job:'animal',home:'apartment',travel:'bus',want:'park',saving:0});assert.ok(cheap.remaining>0);assert.equal(cheap.want,0);
@@ -37,7 +37,7 @@ console.log('PASS: transport components, N/A costs, and derived totals $20 / $80
 
 // Living costs appear in Step 3 only: the Step 2 subtotal includes no groceries or subscriptions.
 for(const home of Object.keys(HOMES)){const b=calculate({home,travel:'bus',want:'park',saving:100});assert.equal(b.housingNeeds,HOMES[home].rent+b.utilities+80+20);assert.equal(b.dailyLiving,985);assert.equal(b.lifestyleTotal,1085);assert.equal(b.planned,b.housingNeeds+b.lifestyleTotal);}
-assert.equal(calculate({want:'treat',saving:200}).lifestyleTotal,1235);assert.equal(FIXED.subscriptions,30);
+assert.equal(calculate({want:'treat',saving:200}).lifestyleTotal,1233);assert.equal(FIXED.subscriptions,30);
 console.log('PASS: Step 2/3 split, $985 living bills, and lifestyle totals without duplicate bills.');
 
 // Summary categories are independent and add up exactly once.
@@ -66,8 +66,19 @@ console.log('PASS: fixed 20% rate for every career, including blank-workbook rat
 const base={job:'artist',home:'apartment',travel:'bus',want:'treat',saving:200};
 for(let mask=0;mask<32;mask++){
  const bills=Object.fromEntries(OPTIONAL_BILLS.map((key,i)=>[key,Boolean(mask&(1<<i))]));const b=calculate({...base,bills});const living=400+OPTIONAL_BILLS.reduce((sum,key)=>sum+(bills[key]?FIXED[key]:0),0);
- assert.equal(b.dailyLiving,living);assert.equal(b.lifestyleTotal,living+250);assert.equal(b.totalMonthlyExpenses,b.housingSubtotal+b.transportationSubtotal+living+250);assert.equal(b.remaining,b.income-b.totalMonthlyExpenses);assert.equal(b.afterNeeds,b.income-b.housingSubtotal-b.transportationSubtotal-living);assert.equal(b.food,400);assert.deepEqual(b.billChoices,bills);
+ assert.equal(b.dailyLiving,living);assert.equal(b.lifestyleTotal,living+248);assert.equal(b.totalMonthlyExpenses,b.housingSubtotal+b.transportationSubtotal+living+248);assert.equal(b.remaining,b.income-b.totalMonthlyExpenses);assert.equal(b.afterNeeds,b.income-b.housingSubtotal-b.transportationSubtotal-living);assert.equal(b.food,400);assert.deepEqual(b.billChoices,bills);
 }
 assert.equal(calculate({bills:{food:false,internet:false,phone:false,medical:false,essentials:false,subscriptions:false}}).dailyLiving,400);
 assert.equal(calculate({}).dailyLiving,985);assert.equal(calculate({bills:{internet:false}}).dailyLiving,915);assert.equal(calculate({bills:null}).dailyLiving,985);assert.equal(calculate({bills:[]}).dailyLiving,985);assert.equal(isBillIncluded({bills:{food:false}},'food'),true);assert.equal(calculate({bills:{medical:false}}).medical,280);
 console.log('PASS: all 32 optional-bill combinations, mandatory groceries, unchanged price labels, backward-compatible defaults, and exact final totals.');
+
+assert.equal(Object.keys(FUN_OPTIONS).length,12);assert.equal(MAX_FUN_CHOICES,4);assert.equal(calculate({saving:0}).want,0);assert.equal(calculate({saving:0}).extras,0);
+let subsets=0;const keys=Object.keys(FUN_OPTIONS);
+for(let mask=0;mask<(1<<12);mask++){const fun=keys.filter((key,i)=>mask&(1<<i));if(fun.length>4)continue;const b=calculate({...base,fun});const weekly=fun.reduce((n,key)=>n+FUN_OPTIONS[key].cost,0);assert.equal(b.weeklyFun,weekly);assert.equal(b.want,weekly*4);assert.equal(b.lifestyleTotal,b.dailyLiving+b.saving+weekly*4);assert.equal(b.remaining,b.income-b.totalMonthlyExpenses);assert.deepEqual(b.funChoices,fun);subsets++;}
+assert.equal(subsets,794);assert.deepEqual(normalizeFunSelection({fun:['coffee','coffee','bad','books',null]}),['coffee','books']);assert.equal(normalizeFunSelection({fun:keys}).length,4);assert.deepEqual(normalizeFunSelection({fun:[],want:'movie'}),[]);
+assert.equal(calculate({want:'movie'}).want,100);assert.equal(calculate({want:'treat'}).want,48);assert.equal(calculate({want:'park'}).want,0);assert.equal(calculate({fun:['dinner','movie','coffee','books']}).weeklyFun,60);assert.equal(calculate({fun:['dinner','movie','coffee','books']}).want,240);
+console.log('PASS: 12 weekly options, all 794 subsets of up to four, zero selections, duplicate/invalid rejection, monthly ×4 conversion, and legacy migration.');
+
+assert.equal(Object.keys(HOMES).length,4);for(const key of ['rent','electricity','water','trash'])assert.equal(HOMES.shared[key],Math.floor(HOMES.townhouse[key]/2));
+const shared=calculate({job:'office',home:'shared',travel:'bus',fun:['coffee'],saving:100});assert.equal(shared.home,950);assert.equal(shared.utilities,124);assert.equal(shared.housingSubtotal,1094);assert.equal(shared.rentersInsurance,20);assert.equal(shared.dailyLiving,985);assert.equal(shared.planned,1094+80+985+40+100);assert.equal(shared.remaining,shared.income-shared.planned);
+console.log('PASS: fourth housing option, half-rent/shared utilities, whole-dollar shares and personal bills counted once.');

@@ -1,4 +1,4 @@
-import {MODEL,JOBS,HOMES,TRAVEL,WANTS,FIXED,MAX_SAVING,OPTIONAL_BILLS,normalizeJobKey} from './data.js';
+import {MODEL,JOBS,HOMES,TRAVEL,WANTS,FIXED,MAX_SAVING,OPTIONAL_BILLS,FUN_OPTIONS,MAX_FUN_CHOICES,FUN_WEEKS_PER_MONTH,normalizeJobKey} from './data.js';
 export {JOBS,HOMES,TRAVEL,WANTS,FIXED,MAX_SAVING} from './data.js';
 export const HOURS_PER_WEEK=MODEL.hoursPerWeek;
 // Floor each calculated amount, not just its label, so the whole-dollar rows reconcile.
@@ -28,8 +28,13 @@ export function isBillIncluded(s={},key){
  const bills=s.bills;
  return !(bills&&typeof bills==='object'&&!Array.isArray(bills)&&Object.hasOwn(bills,key)&&bills[key]===false);
 }
+export function normalizeFunSelection(s={}){
+ const legacy={park:['park'],treat:['lunch'],movie:['movie','books']};
+ const raw=Array.isArray(s.fun)?s.fun:(typeof s.want==='string'&&Object.hasOwn(legacy,s.want)?legacy[s.want]:[]);
+ return [...new Set(raw.filter(key=>typeof key==='string'&&Object.hasOwn(FUN_OPTIONS,key)))].slice(0,MAX_FUN_CHOICES);
+}
 export function calculate(s={}){
- const job=lookup(JOBS,normalizeJobKey(s.job)),selectedHome=lookup(HOMES,s.home),selectedTravel=lookup(TRAVEL,s.travel),selectedWant=lookup(WANTS,s.want);
+ const job=lookup(JOBS,normalizeJobKey(s.job)),selectedHome=lookup(HOMES,s.home),selectedTravel=lookup(TRAVEL,s.travel);
  const rate=job?.rate??null,weekly=rate===null?null:roundMoney(rate*MODEL.hoursPerWeek);
  const annualGross=weekly===null?null:roundMoney(weekly*MODEL.weeksPerYear);
  // Budget only two biweekly checks; annual earnings still use 52 weeks (26 checks).
@@ -41,7 +46,10 @@ export function calculate(s={}){
  const income=gross===null?null:roundMoney(gross-taxes);
  const home=selectedHome?.rent??null;
  const utilities=selectedHome?selectedHome.electricity+selectedHome.water+selectedHome.trash:null;
- const travel=selectedTravel?.cost??null,want=selectedWant?.cost??null,saving=dollars(s.saving);
+ const travel=selectedTravel?.cost??null,saving=dollars(s.saving);
+ const funChoices=normalizeFunSelection(s);
+ const weeklyFun=funChoices.reduce((sum,key)=>sum+FUN_OPTIONS[key].cost,0);
+ const want=weeklyFun*FUN_WEEKS_PER_MONTH;
  const billChoices=Object.fromEntries(OPTIONAL_BILLS.map(key=>[key,isBillIncluded(s,key)]));
  const housingSubtotal=home===null?null:roundMoney(home+utilities+FIXED.rentersInsurance);
  const transportationSubtotal=travel;
@@ -55,6 +63,6 @@ export function calculate(s={}){
  const monthlySpending=housingNeeds===null||want===null?null:roundMoney(housingNeeds+dailyLiving+want);
  const remaining=income===null||totalMonthlyExpenses===null?null:roundMoney(income-totalMonthlyExpenses);
  const afterNeeds=income===null||needs===null?null:roundMoney(income-needs);
- return {rate,weekly,biweekly,annualGross,gross,taxRate,taxes,income,home,utilities,travel,want,saving,needs,extras,planned,remaining,afterNeeds,housingNeeds,housingSubtotal,transportationSubtotal,totalMonthlyExpenses,monthlySpending,dailyLiving,lifestyleTotal,billChoices,...FIXED};
+ return {rate,weekly,biweekly,annualGross,gross,taxRate,taxes,income,home,utilities,travel,want,weeklyFun,funChoices,saving,needs,extras,planned,remaining,afterNeeds,housingNeeds,housingSubtotal,transportationSubtotal,totalMonthlyExpenses,monthlySpending,dailyLiving,lifestyleTotal,billChoices,...FIXED};
 }
 export const formatMoney=n=>n===null||n===undefined?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(roundMoney(n));

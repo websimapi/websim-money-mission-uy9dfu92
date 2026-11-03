@@ -1,5 +1,5 @@
-import {HOURS_PER_WEEK,MAX_SAVING,HOMES,calculate,dollars,formatMoney as money} from './budget.js';
-import {TRAVEL,JOBS,normalizeJobKey} from './data.js';
+import {HOURS_PER_WEEK,MAX_SAVING,HOMES,calculate,normalizeFunSelection,dollars,formatMoney as money} from './budget.js';
+import {TRAVEL,JOBS,FUN_OPTIONS,MAX_FUN_CHOICES,normalizeJobKey} from './data.js';
 document.querySelectorAll('[data-hours]').forEach(el=>el.textContent=HOURS_PER_WEEK);
 // Keep the visible comparison and the calculator on the same source of truth.
 document.querySelectorAll('[data-home-column]').forEach(cell=>{const home=HOMES[cell.dataset.homeColumn];const bill=cell.closest('[data-home-bill]').dataset.homeBill;cell.textContent=money(bill==='utilities'?home.electricity+home.water+home.trash:home[bill]);});
@@ -17,6 +17,7 @@ document.querySelectorAll('main [data-group="job"]').forEach(btn=>{
  const job=JOBS[btn.dataset.value];btn.querySelector('.job-copy strong').textContent=job.name;btn.querySelector('.job-copy small').textContent=job.description;btn.querySelector('.qualification-value').textContent=job.qualification;
  const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(job.rate)+' '));const unit=document.createElement('small');unit.textContent='/ hour';price.append(unit);
 });
+document.querySelectorAll('main [data-fun]').forEach(input=>{const item=FUN_OPTIONS[input.dataset.fun],row=input.closest('.fun-row');row.querySelector('.fun-name').textContent=item.name;row.querySelector('.bill-icon').textContent=item.icon;row.querySelector('[data-fun-price]').textContent=money(item.cost);});
 const fields=['name','date','fourWeeks','needsReason','goal','saving','savedFour','fits','biggest','surprise','percent'];
 const titles=['Earn it','Plan your needs','Save & spend','Check your plan'];
 let state={},current=0,blankPrint=false;
@@ -37,8 +38,11 @@ try{
 }catch{}
 const normalizedJob=normalizeJobKey(state.job);
 if(normalizedJob!==state.job){state.job=normalizedJob;try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{}}
+const hadLegacyFun=Object.hasOwn(state,'want')&&!Array.isArray(state.fun);
+state.fun=normalizeFunSelection(state);
+if(hadLegacyFun){delete state.want;try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{}}
 function budgetMessage(b){
- if(b.remaining===null)return 'Complete the career, housing, transportation, fun-money and savings selections in Steps 1–3 to calculate the budget balance.';
+ if(b.remaining===null)return 'Complete your career, housing, transportation, and monthly savings. Weekly fun-money choices are optional.';
  if(b.remaining<0)return 'Budget deficit: monthly expenses and savings exceed take-home income by '+money(-b.remaining)+'. Reduce expenses or revise the savings allocation to balance the budget.';
  if(b.remaining===0)return 'Balanced budget: all monthly take-home income is allocated to expenses and savings. No unallocated cash remains.';
  return 'Budget surplus: '+money(b.remaining)+' remains after monthly expenses and planned savings. This is available for additional savings or unexpected costs.';
@@ -46,6 +50,10 @@ function budgetMessage(b){
 
 function render(){
  const b=calculate(state);
+ const atFunLimit=b.funChoices.length>=MAX_FUN_CHOICES;
+ document.querySelectorAll('main [data-fun]').forEach(input=>{const chosen=b.funChoices.includes(input.dataset.fun);input.checked=chosen;input.disabled=atFunLimit&&!chosen;input.closest('.fun-row').classList.toggle('selected',chosen);input.closest('.fun-row').classList.toggle('at-limit',input.disabled);});
+ document.querySelector('#fun-count').textContent=b.funChoices.length+' of '+MAX_FUN_CHOICES+' selected';
+ document.querySelector('#fun-limit-hint').textContent=atFunLimit?'4 selected. Uncheck one to choose a different item.':'Choose any 0–4 items.';
  document.querySelectorAll('main [data-bill]').forEach(input=>{const included=b.billChoices[input.dataset.bill];input.checked=included;input.closest('.living-bill').classList.toggle('bill-unselected',!included);});
  document.querySelectorAll('[data-home-column]').forEach(cell=>cell.classList.toggle('chosen-column',cell.dataset.homeColumn===state.home));
  document.querySelectorAll('[data-travel-column]').forEach(cell=>cell.classList.toggle('chosen-column',cell.dataset.travelColumn===state.travel));
@@ -60,7 +68,7 @@ function render(){
  status.textContent=budgetMessage(b);
  const done=[b.income!==null,b.needs!==null,b.extras!==null,b.remaining!==null];
  document.querySelectorAll('[data-page]').forEach((btn,i)=>{btn.classList.toggle('complete',done[i]);btn.setAttribute('aria-label',titles[i]+(done[i]?', choices complete':''));});
- const prompts=[b.income===null?'Choose a job to start your mission.':'Your income is ready. Next, plan your needs!',b.needs===null?'Choose one home and one way to travel.':'Your housing and travel costs are ready. Next, plan living bills and savings!',b.extras===null?'Enter your savings (0 is okay), then pick your fun.':b.remaining!==null&&b.remaining<0?'You can try a different amount, or check your whole plan next.':'Subtotals are complete. Review the monthly budget summary.',b.remaining===null?'You can use the tabs above to finish any missing choices.':'Review the category subtotals, net remaining cash, and reflection questions.'];
+ const prompts=[b.income===null?'Choose a job to start your mission.':'Your income is ready. Next, plan your needs!',b.needs===null?'Choose one home and one way to travel.':'Your housing and travel costs are ready. Next, plan living bills and savings!',b.extras===null?'Enter monthly savings (0 is okay). You may choose up to four weekly fun items.':b.remaining!==null&&b.remaining<0?'You can try a different amount, or check your whole plan next.':'Subtotals are complete. Review the monthly budget summary.',b.remaining===null?'You can use the tabs above to finish any missing choices.':'Review the category subtotals, net remaining cash, and reflection questions.'];
  document.querySelector('#page-prompt').textContent=prompts[current];
 }
 function syncInputs(){fields.forEach(key=>document.querySelector('main [data-field="'+key+'"]').value=state[key]??'');validateSaving();}
@@ -73,6 +81,12 @@ document.querySelectorAll('main [data-field]').forEach(input=>input.addEventList
 document.querySelectorAll('main [data-bill]').forEach(input=>input.addEventListener('change',()=>{
  state.bills={...calculate(state).billChoices,[input.dataset.bill]:input.checked};save();render();
 }));
+document.querySelectorAll('main [data-fun]').forEach(input=>input.addEventListener('change',()=>{
+ const choices=normalizeFunSelection(state);
+ if(input.checked){if(choices.length>=MAX_FUN_CHOICES){input.checked=false;render();return;}if(!choices.includes(input.dataset.fun))choices.push(input.dataset.fun);}
+ else{const index=choices.indexOf(input.dataset.fun);if(index!==-1)choices.splice(index,1);}
+ state.fun=choices;save();render();
+}));
 document.querySelector('#prev').addEventListener('click',()=>navigate(current-1,true));document.querySelector('#next').addEventListener('click',()=>navigate(current+1,true));
 function preparePrint(){
  document.querySelector('.print-workbook')?.remove();
@@ -84,10 +98,13 @@ function preparePrint(){
   sheet.querySelectorAll('[data-home-column]').forEach(cell=>cell.classList.toggle('chosen-column',!blankPrint&&cell.dataset.homeColumn===printState.home));
   sheet.querySelectorAll('[data-travel-column]').forEach(cell=>cell.classList.toggle('chosen-column',!blankPrint&&cell.dataset.travelColumn===printState.travel));
   sheet.querySelectorAll('[data-group]').forEach(btn=>{btn.classList.toggle('selected',!blankPrint&&String(printState[btn.dataset.group])===btn.dataset.value);btn.removeAttribute('aria-pressed');});
-  sheet.querySelectorAll('[data-output]').forEach(el=>{const value=blankPrint&&el.dataset.output==='dailyLiving'?null:b[el.dataset.output];el.textContent=value===null?'':money(value);el.classList.toggle('empty-output',value===null);});
+  sheet.querySelectorAll('[data-output]').forEach(el=>{const value=blankPrint&&['dailyLiving','weeklyFun','want'].includes(el.dataset.output)?null:b[el.dataset.output];el.textContent=value===null?'':money(value);el.classList.toggle('empty-output',value===null);});
   sheet.querySelectorAll('[data-rate]').forEach(el=>{el.textContent=b.taxRate===null?'':String(b.taxRate)+(el.hasAttribute('data-percent')?'%':'');el.classList.toggle('empty-rate',b.taxRate===null);});
   sheet.querySelectorAll('[data-bill-row]').forEach(row=>row.classList.toggle('bill-unselected',!blankPrint&&!b.billChoices[row.dataset.billRow]));
+  sheet.querySelector('.fun-count')?.remove();sheet.querySelector('.fun-limit-hint')?.remove();
+  sheet.querySelectorAll('[data-fun-row]').forEach(row=>{row.classList.toggle('selected',!blankPrint&&b.funChoices.includes(row.dataset.funRow));row.classList.remove('at-limit');});
   sheet.querySelectorAll('input,textarea').forEach(input=>{
+   if(input.hasAttribute('data-fun')){const mark=document.createElement('span');mark.className='print-fun-check';mark.textContent=!blankPrint&&b.funChoices.includes(input.dataset.fun)?'✓':'';mark.setAttribute('aria-hidden','true');input.replaceWith(mark);return;}
    if(input.hasAttribute('data-bill')){const mark=document.createElement('span');mark.className='print-bill-check';mark.textContent=!blankPrint&&b.billChoices[input.dataset.bill]?'✓':'';mark.setAttribute('aria-hidden','true');input.replaceWith(mark);return;}
    const span=document.createElement('span');span.className=input.tagName==='TEXTAREA'?'print-answer':'print-field';
    let text=String(printState[input.dataset.field]??'');

@@ -14,7 +14,7 @@ document.querySelectorAll('main [data-group="travel"]').forEach(btn=>{
  const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(plan.cost)+' '));const unit=document.createElement('small');unit.textContent='/ month';price.append(unit);
 });
 document.querySelectorAll('main [data-group="job"]').forEach(btn=>{
- const job=JOBS[btn.dataset.value];btn.querySelector('.job-copy strong').textContent=job.name;btn.querySelector('.job-copy small').textContent=job.description;btn.querySelector('.qualification-value').textContent=job.qualification;btn.querySelector('[data-career-tax]').textContent='Est. combined tax rate: '+calculate({job:btn.dataset.value}).taxRate+'%';
+ const job=JOBS[btn.dataset.value];btn.querySelector('.job-copy strong').textContent=job.name;btn.querySelector('.job-copy small').textContent=job.description;btn.querySelector('.qualification-value').textContent=job.qualification;
  const price=btn.querySelector('b');price.replaceChildren(document.createTextNode(money(job.rate)+' '));const unit=document.createElement('small');unit.textContent='/ hour';price.append(unit);
 });
 const fields=['name','date','fourWeeks','needsReason','goal','saving','savedFour','fits','biggest','surprise','percent'];

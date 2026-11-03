@@ -14,6 +14,7 @@ function progressiveTax(taxable){
  for(const [ceiling,rate] of bands){tax+=Math.max(0,Math.min(taxable,ceiling)-previous)*rate;if(taxable<=ceiling)break;previous=ceiling;}
  return tax;
 }
+// Reference-only 2026 tax model retained for comparison; calculate() uses the flat classroom rate.
 // Annual tax-liability estimate, averaged monthly; not an employer's exact withholding.
 // Single NC resident under 65; standard deductions; no credits, dependents or pre-tax deductions.
 export function estimateTaxes(annual){
@@ -29,13 +30,9 @@ export function calculate(s={}){
  // Budget only two biweekly checks; annual earnings still use 52 weeks (26 checks).
  const biweekly=weekly===null?null:roundMoney(weekly*2);
  const gross=biweekly===null?null:roundMoney(biweekly*2);
- // Derive a whole-percent blended teaching estimate from the existing 2026 tax model.
- // Benchmark components are averaged over the full year, not the two-check budget month.
- const averageMonthlyGross=annualGross===null?null:annualGross/MODEL.monthsPerYear;
- const referenceTaxDetails=annualGross===null?null:estimateTaxes(annualGross);
- const referenceTaxes=referenceTaxDetails===null?null:Object.values(referenceTaxDetails).reduce((a,n)=>a+n,0);
- const taxRate=referenceTaxes===null?null:Math.floor(referenceTaxes/averageMonthlyGross*100);
- const taxes=gross===null||taxRate===null?null:roundMoney(gross*taxRate/100);
+ // One flat classroom estimate for every career, not actual statutory tax or withholding.
+ const taxRate=MODEL.taxRate;
+ const taxes=gross===null?null:roundMoney(gross*taxRate/100);
  const income=gross===null?null:roundMoney(gross-taxes);
  const home=selectedHome?.rent??null;
  const utilities=selectedHome?selectedHome.electricity+selectedHome.water+selectedHome.trash:null;
@@ -53,6 +50,6 @@ export function calculate(s={}){
  const monthlySpending=housingNeeds===null||want===null?null:roundMoney(housingNeeds+dailyLiving+want);
  const remaining=income===null||totalMonthlyExpenses===null?null:roundMoney(income-totalMonthlyExpenses);
  const afterNeeds=income===null||needs===null?null:roundMoney(income-needs);
- return {rate,weekly,biweekly,annualGross,gross,taxRate,taxes,income,home,utilities,travel,want,saving,needs,extras,planned,remaining,afterNeeds,referenceTaxDetails,housingNeeds,housingSubtotal,transportationSubtotal,totalMonthlyExpenses,monthlySpending,dailyLiving,lifestyleTotal,...FIXED};
+ return {rate,weekly,biweekly,annualGross,gross,taxRate,taxes,income,home,utilities,travel,want,saving,needs,extras,planned,remaining,afterNeeds,housingNeeds,housingSubtotal,transportationSubtotal,totalMonthlyExpenses,monthlySpending,dailyLiving,lifestyleTotal,...FIXED};
 }
 export const formatMoney=n=>n===null||n===undefined?'—':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(roundMoney(n));

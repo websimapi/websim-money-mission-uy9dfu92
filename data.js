@@ -1,5 +1,5 @@
 // Research notes, source dates, and scenario assumptions are documented in sources.html.
-export const MODEL={location:'Raleigh, North Carolina',household:'One adult, no children',taxYear:2026,hoursPerWeek:40,weeksPerYear:52,monthsPerYear:12};
+export const MODEL={location:'Raleigh, North Carolina',household:'One adult, no children',taxYear:2026,taxRate:20,hoursPerWeek:40,weeksPerYear:52,monthsPerYear:12};
 // O*NET 2025 national medians, floored for this whole-dollar workbook.
 // benchmarkRate preserves a published wage or the explicitly documented trades average.
 // rate is the whole-dollar rate used in every calculation.

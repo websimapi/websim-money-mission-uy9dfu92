@@ -50,11 +50,14 @@ assert.equal(Object.keys(JOBS).length,7);for(const [key,job] of Object.entries(J
 assert.equal(roundMoney(25.99),25);assert.equal(roundMoney(-25.01),-26);assert.equal(formatMoney(25.99),'$25');assert.equal(formatMoney(-25.01),'-$26');assert.equal(formatMoney(null),'—');
 console.log('PASS: seven career qualifications, floor rounding, integer tax components, and reconciling whole-dollar totals.');
 
-assert.equal(calculate({}).biweekly,null);assert.equal(calculate({}).taxRate,null);assert.equal(calculate({}).taxes,null);
-const pay=calculate({job:'artist'});assert.equal(pay.weekly,1200);assert.equal(pay.biweekly,2400);assert.equal(pay.gross,4800);assert.equal(pay.taxRate,19);assert.equal(pay.taxes,912);assert.equal(pay.income,3888);assert.equal(pay.annualGross,62400);assert.notEqual(pay.gross,pay.annualGross/12);
+assert.equal(calculate({}).biweekly,null);assert.equal(calculate({}).taxRate,20);assert.equal(calculate({}).taxes,null);
+const pay=calculate({job:'artist'});assert.equal(pay.weekly,1200);assert.equal(pay.biweekly,2400);assert.equal(pay.gross,4800);assert.equal(pay.taxRate,20);assert.equal(pay.taxes,960);assert.equal(pay.income,3840);assert.equal(pay.annualGross,62400);assert.notEqual(pay.gross,pay.annualGross/12);
 console.log('PASS: weekly, biweekly, two-check monthly gross, whole-percent tax equation, and net pay.');
 
 for(const old of ['electrician','plumber','hvac']){assert.equal(normalizeJobKey(old),'trades');assert.deepEqual(calculate({job:old}),calculate({job:'trades'}));assert.ok(!Object.hasOwn(JOBS,old));}
 for(const key of ['office','restaurant','retail']){assert.match(JOBS[key].qualification,/No degree or trade certificate/);assert.ok(calculate({job:key}).income>0);}
-assert.equal(calculate({job:'office'}).taxRate,17);assert.equal(calculate({job:'restaurant'}).taxRate,14);assert.equal(calculate({job:'retail'}).taxRate,15);
+assert.equal(calculate({job:'office'}).taxRate,20);assert.equal(calculate({job:'restaurant'}).taxRate,20);assert.equal(calculate({job:'retail'}).taxRate,20);
 console.log('PASS: three no-degree entry paths, one representative trades category, and legacy selection migration.');
+
+for(const key of Object.keys(JOBS)){const b=calculate({job:key});assert.equal(b.taxRate,20);assert.equal(b.taxes,Math.floor(b.gross/5));assert.equal(b.income,b.gross-b.taxes);}
+console.log('PASS: fixed 20% rate for every career, including blank-workbook rate, and consistent take-home pay.');

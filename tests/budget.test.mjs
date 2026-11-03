@@ -1,17 +1,29 @@
-// Run with: node --experimental-default-type=module tests/budget.test.mjs
 import assert from 'node:assert/strict';
-import {calculate,dollars} from '../budget.js';
+import {calculate,dollars,estimateTaxes,roundMoney} from '../budget.js';
+import {JOBS,HOMES,TRAVEL,WANTS,FIXED} from '../data.js';
 assert.equal(calculate({}).remaining,null);
-assert.equal(dollars(''),null);assert.equal(dollars(null),null);assert.equal(dollars('0'),0);
-for(const x of [-1,1.5,1201,'oops',Infinity,true])assert.equal(dollars(x),null);
-let b=calculate({job:'artist',home:'300',travel:'0',saving:'0',want:'0'});
-assert.deepEqual([b.income,b.needs,b.planned,b.remaining],[800,500,500,300]);
-b=calculate({job:'animal',home:'400',travel:'50',saving:'20',want:'50'});
-assert.deepEqual([b.income,b.needs,b.extras,b.planned,b.remaining],[1000,650,70,720,280]);
-b=calculate({job:'artist',home:'500',travel:'150',saving:'0',want:'0'});assert.equal(b.remaining,-50);
-b=calculate({job:'artist',home:'300',travel:'0',saving:'300',want:'0'});assert.equal(b.remaining,0);
-assert.equal(calculate({job:'coder',home:'500',travel:'150',saving:'0'}).remaining,null);
-assert.equal(calculate({job:'artist',home:'3',travel:'0',saving:'0',want:'0'}).needs,null);
-assert.equal(calculate({job:'toString'}).income,null);
-let combos=0;for(const job of ['artist','animal','coder'])for(const home of [300,400,500])for(const travel of [0,50,150])for(const saving of [0,50,200,800])for(const want of [0,25,50]){b=calculate({job,home,travel,saving,want});assert.equal(b.remaining,b.income-(home+travel+200+saving+want));combos++;}
-console.log('PASS: '+combos+' budget combinations with 40-hour income; empty fields, free choices, exact fit, overspending, and invalid inputs.');
+for(const x of ['',null,undefined,-1,1.5,20001,'bad',Infinity,true,{}])assert.equal(dollars(x),null);
+assert.equal(dollars('0'),0);assert.equal(dollars('20000'),20000);
+for(const [job,data] of Object.entries(JOBS)){
+ const b=calculate({job});assert.equal(b.weekly,roundMoney(data.rate*40));assert.equal(b.gross,roundMoney(data.rate*40*52/12));
+ assert.ok(b.taxes>0&&b.income<b.gross);assert.equal(b.income,roundMoney(b.gross-b.taxes));
+}
+assert.equal(calculate({job:'artist'}).gross,5246.8);
+assert.equal(calculate({job:'animal'}).gross,3948.53);
+assert.equal(calculate({job:'coder'}).gross,11332.53);
+// Federal brackets are progressive, and no tax band applies to income below its floor.
+assert.deepEqual(estimateTaxes(0),{federal:0,state:0,fica:0});
+const t=estimateTaxes(28500);assert.equal(t.federal,103.33);
+assert.equal(calculate({home:'20'}).home,null);assert.equal(calculate({job:'toString'}).gross,null);
+for(const [home,data] of Object.entries(HOMES)){
+ const b=calculate({home,travel:'bike'});assert.equal(b.home,data.rent);assert.equal(b.utilities,data.electricity+data.water+data.trash);
+ assert.equal(b.needs,data.rent+b.utilities+TRAVEL.bike.cost+Object.values(FIXED).reduce((a,n)=>a+n,0));
+}
+assert.equal(calculate({home:'apartment'}).utilities,185);assert.equal(calculate({home:'townhouse'}).utilities,250);assert.equal(calculate({home:'house'}).utilities,320);
+let combos=0;for(const job of Object.keys(JOBS))for(const home of Object.keys(HOMES))for(const travel of Object.keys(TRAVEL))for(const want of Object.keys(WANTS))for(const saving of [0,100,500,10000]){
+ const b=calculate({job,home,travel,want,saving});assert.equal(b.planned,b.needs+WANTS[want].cost+saving);assert.equal(b.remaining,roundMoney(b.income-b.planned));combos++;
+}
+const over=calculate({job:'animal',home:'house',travel:'car',want:'movie',saving:0});assert.ok(over.remaining<0);
+const cheap=calculate({job:'animal',home:'apartment',travel:'bus',want:'park',saving:0});assert.ok(cheap.remaining>0);assert.equal(cheap.want,0);
+assert.equal(calculate({job:'animal',home:'apartment',travel:'bus',want:'park'}).remaining,null);
+console.log('PASS '+combos+' monthly budget combinations: researched pay, 52/12 conversion, tax estimate, separate home utilities, free choices, missing fields and overspending.');
